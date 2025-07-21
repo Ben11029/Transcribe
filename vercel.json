@@ -1,15 +1,11 @@
 {
-    "version":2,
-    "builds":[
-        {
-            "src":"transcribe.html",
-            "use":"@vercel/static"
-        }
+    "version": 2,
+    "builds": [
+        { "src": "api/verify-code.js", "use": "@vercel/node" },
+        { "src": "transcribe.html",    "use": "@vercel/static" }
     ],
-    "routes":[
-        {
-            "src":"/",
-            "dest":"/transcribe.html"
-        }
+    "routes": [
+        { "src": "/api/verify-code", "dest": "/api/verify-code" },
+        { "src": "/",              "dest": "/transcribe.html" }
     ]
 }
