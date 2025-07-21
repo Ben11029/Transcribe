@@ -163,9 +163,8 @@
     </div>
 
     <script>
-        // --- Access Code (Should be set via environment variable in production) ---
-
-    
+        // --- Access Codes (Client-side validation) ---
+        const VALID_ACCESS_CODES = ["dharma2025", "sutra888", "zenmaster", "lotus24"]; // You can add/modify codes here
 
         // --- DOM Element References ---
         const openaiApiKeyInput = document.getElementById('openaiApiKey');
@@ -214,8 +213,8 @@
         }
 
         // !! MODIFIED FUNCTION !!
-        // This function now calls the serverless API to verify the access code.
-        async function handleUnlock() {
+        // This function now uses a client-side list for validation.
+        function handleUnlock() {
             const userCode = accessCodeInput.value;
             if (!userCode) {
                 accessCodeError.textContent = '请输入访问码。';
@@ -223,43 +222,21 @@
                 return;
             }
 
-            unlockBtn.disabled = true; // Prevent multiple clicks
-            unlockBtn.textContent = '验证中...';
-            accessCodeError.classList.add('hidden');
-
-            try {
-                // Send a POST request to our Serverless Function
-                const response = await fetch('/api/verify-code', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ accessCode: userCode }), // Send user's code as JSON
-                });
-
-                // Parse the JSON response from the server
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    // If the server returns success
-                    localStorage.setItem('accessGranted', 'true');
-                    unlockApp();
-                    // On successful validation, close the settings modal
-                    settingsModalOverlay.classList.add('hidden');
-                } else {
-                    // If the server returns an error
-                    accessCodeError.textContent = result.message || '访问码错误，请重试。';
-                    accessCodeError.classList.remove('hidden');
-                }
-            } catch (error) {
-                // Handle network errors or other exceptions
-                console.error('Verification request failed:', error);
-                accessCodeError.textContent = '验证请求失败，请检查网络连接。';
+            // Check if the entered code is in our list of valid codes.
+            if (VALID_ACCESS_CODES.includes(userCode)) {
+                // If the code is valid
+                localStorage.setItem('accessGranted', 'true');
+                unlockApp();
+                // On successful validation, close the settings modal
+                settingsModalOverlay.classList.add('hidden');
+                // Clear the input and error message for security/usability
+                accessCodeInput.value = '';
+                accessCodeError.classList.add('hidden');
+            } else {
+                // If the code is invalid
+                accessCodeError.textContent = '访问码错误，请重试。';
                 accessCodeError.classList.remove('hidden');
-            } finally {
-                // Restore the button state regardless of success or failure
-                unlockBtn.disabled = false;
-                unlockBtn.textContent = '解锁';
+                accessCodeInput.focus();
             }
         }
 
