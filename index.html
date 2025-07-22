@@ -605,7 +605,8 @@
             if (status === 'loading') {
                 cell.innerHTML = content;
             } else {
-                cell.innerHTML = `<div class="text-base results-text ${status === 'success' ? 'text-gray-900' : 'text-red-600'}">${content}</div>`;
+// --- 设置字体大小 ---text-xs (12px)text-sm ( 14px) text-base (16px) text-lg (大, 18px)text-xl (20px)text-2xl (24px)
+                cell.innerHTML = `<div class="text-xl results-text ${status === 'success' ? 'text-gray-900' : 'text-red-600'}">${content}</div>`;
             }
         }
 
