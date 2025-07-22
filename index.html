@@ -441,7 +441,7 @@
         }
 
         async function correctAndPolishText(originalText, segmentId) {
-            const prompt = `以下是一段佛教讲座的语音转录，其中可能包含错别字和谐音字。请纠正所有错别字和谐音字，使用简体，使文本流畅、准确，并进行适当的分段。请直接返回处理后的文本，不要添加任何额外的解释或标签。\n\n原始文本：\n"${originalText}"`;
+            const prompt = `以下是一段佛教讲座的语音转录，其中可能包含错别字和谐音字。请纠正所有错别字和谐音字，使用简体，适当分段，使文本流畅、准确，并进行适当的分段。请直接返回处理后的文本，不要添加任何额外的解释或标签。\n\n原始文本：\n"${originalText}"`;
             try {
                 const polishedText = await callLLM(prompt);
                 identifyAndHighlightChineseTerms(polishedText, segmentId);
@@ -453,7 +453,7 @@
         }
 
         async function identifyAndHighlightChineseTerms(text, segmentId) {
-            const prompt = `从以下文本中，识别出与佛教修行(修证)相关的词语以及佛教学术术语。请以JSON数组的格式返回这些词语，例如：["词语一", "词语二"]。如果找不到，请返回空数组 []。\n\n文本：\n"${text}"`;
+            const prompt = `从以下文本中，识别出与佛教修行(修证)、学术相关的术语。请以JSON数组的格式返回这些词语，例如：["词语一", "词语二"]。如果找不到，请返回空数组 []。\n\n文本：\n"${text}"`;
             try {
                 const rawResponse = await callLLM(prompt);
                 const termsJson = extractJson(rawResponse);
@@ -470,7 +470,7 @@
         }
 
         async function translateText(textToTranslate, chineseTerms, segmentId) {
-            const prompt = `请将以下中文文本直接翻译成英文，并保留段落结构。不要回复其他内容。\n\n中文文本：\n"${textToTranslate}"`;
+            const prompt = `请将以下中文文本直接翻译成英文，适当分段。不要回复其他内容。\n\n中文文本：\n"${textToTranslate}"`;
             try {
                 const translatedText = await callLLM(prompt);
                 identifyAndHighlightEnglishTerms(translatedText, chineseTerms, segmentId);
