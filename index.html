@@ -508,7 +508,7 @@
         }
 
         function updateSessionUI(isActive) {
-            sessionBtn.textContent = isActive ? '暂停⏸️Pause' : '启动会话⏯️Launch Audio';
+            sessionBtn.textContent = isActive ? '终止⏸️End Audio' : '启动会话⏯️Launch Audio';
             sessionBtn.classList.toggle('bg-blue-600', !isActive);
             sessionBtn.classList.toggle('hover:bg-blue-700', !isActive);
             sessionBtn.classList.toggle('bg-red-600', isActive);
