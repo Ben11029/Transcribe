@@ -61,23 +61,23 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-end mb-4">
                 <button id="settingsBtn" class="w-full bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-300 transition-all flex items-center justify-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                    设置
+                    设置⚙️Setting
                 </button>
                 <button id="sessionBtn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all" disabled>
-                    启动会话
+                    启动会话⏯️Launch Audio
                 </button>
                 <button id="pauseBtn" class="w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all" disabled>
-                    暂停
+                    暂停⏸️Pause
                 </button>
                 <button id="captureBtn" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all" disabled>
-                    截断 (F9)
+                    截断✂️Cut (F9)
                 </button>
             </div>
 
             <div id="status-container" class="h-6 flex items-center mb-4">
                  <div class="flex items-center text-sm font-medium text-gray-600">
                      <div id="status-indicator" class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
-                     <span id="status-text">会话未开始</span>
+                     <span id="status-text">会话未开始 Audio not started</span>
                 </div>
             </div>
         </div>
@@ -103,7 +103,7 @@
     <div id="settingsModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl m-4">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">设置</h2>
+                <h2 class="text-2xl font-bold text-gray-900">设置Setting</h2>
                 <button id="closeSettingsBtn" class="text-gray-400 hover:text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
@@ -113,11 +113,11 @@
                     <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2">访问权限</h3>
                     <div class="pt-4 space-y-2">
                         <div>
-                            <label for="accessCodeInput" class="block text-sm font-medium text-gray-700 mb-1">访问码</label>
+                            <label for="accessCodeInput" class="block text-sm font-medium text-gray-700 mb-1">访问码Access Code</label>
                             <input type="password" id="accessCodeInput" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="请输入访问码以解锁应用">
                         </div>
-                        <p id="accessCodeError" class="text-sm text-red-600 hidden">访问码错误，请重试。</p>
-                        <button id="unlockBtn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700">解锁</button>
+                        <p id="accessCodeError" class="text-sm text-red-600 hidden">访问码错误，请重试。The access code is incorrect. Please try again.</p>
+                        <button id="unlockBtn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700">解锁 Unlock</button>
                     </div>
                 </div>
 
@@ -136,17 +136,17 @@
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2">模型选择</h3>
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2">模型选择 Select Model</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                             <div>
-                                <label for="transcriptionModelSelect" class="block text-sm font-medium text-gray-700 mb-1">转录模型</label>
+                                <label for="transcriptionModelSelect" class="block text-sm font-medium text-gray-700 mb-1">转录模型 Transcribing Models</label>
                                  <select id="transcriptionModelSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                                     <option value="gpt-4o-mini-transcribe">GPT-4o-mini-transcribe</option>
                                     <option value="whisper-1">Whisper-1</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="processingEngineSelect" class="block text-sm font-medium text-gray-700 mb-1">处理引擎</label>
+                                <label for="processingEngineSelect" class="block text-sm font-medium text-gray-700 mb-1">处理引擎 Processing Models</label>
                                  <select id="processingEngineSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                                      <option value="gpt-4o-mini">OpenAI GPT-4o mini</option>
                                      <option value="gpt-4o">OpenAI GPT-4o</option>
@@ -215,7 +215,7 @@
         async function handleUnlock() {
             const userCode = accessCodeInput.value;
             if (!userCode) {
-                accessCodeError.textContent = '请输入访问码。';
+                accessCodeError.textContent = '请输入访问码。Please enter code.';
                 accessCodeError.classList.remove('hidden');
                 return;
             }
@@ -245,7 +245,7 @@
                     settingsModalOverlay.classList.add('hidden');
                 } else {
                     // If the server returns an error
-                    accessCodeError.textContent = result.message || '访问码错误，请重试。';
+                    accessCodeError.textContent = result.message || '访问码错误，请重试。Wrong!';
                     accessCodeError.classList.remove('hidden');
                 }
             } catch (error) {
@@ -256,7 +256,7 @@
             } finally {
                 // Restore the button state regardless of success or failure
                 unlockBtn.disabled = false;
-                unlockBtn.textContent = '解锁';
+                unlockBtn.textContent = '解锁 Unlock';
             }
         }
 
@@ -308,7 +308,7 @@
                 isPaused = false;
                 updateSessionUI(true);
                 startNewRecorder();
-                updateStatus('正在录音... 按 F9 截取', 'recording');
+                updateStatus('正在录音... 按 F9 截取 Recording in progress... Press F9 to capture.', 'recording');
             } catch (err) {
                 updateStatus(`无法访问麦克风: ${err.message}`, 'error');
                 isSessionActive = false;
@@ -340,7 +340,7 @@
                 mediaRecorder.resume();
                 pauseBtn.textContent = '暂停';
                 captureBtn.disabled = false;
-                updateStatus('正在录音... 按 F9 截取', 'recording');
+                updateStatus('正在录音... 按 F9 截取 Recording in progress... Press F9 to capture.', 'recording');
             }
         }
 
