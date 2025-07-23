@@ -475,7 +475,7 @@
         }
 
         async function translateText(textToTranslate, chineseTerms, segmentId) {
-            const prompt = `请将以下中文文本直接翻译成英文，适当分段。不要回复其他内容。\n\n中文文本：\n"${textToTranslate}"`;
+            const prompt = `请将以下中文文本直接翻译成英文，适当分段，不要加引号，不要回复其他内容。\n\n中文文本：\n"${textToTranslate}"`;
             try {
                 const translatedText = await callLLM(prompt);
                 identifyAndHighlightEnglishTerms(translatedText, chineseTerms, segmentId);
