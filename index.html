@@ -54,6 +54,7 @@
         <div class="flex-shrink-0">
             <div class="text-center mb-4">
                 <h1 class="text-3xl font-bold text-gray-900">🧘实时佛教语音🙏转录与翻译🐉 Pro</h1>
+                <p class="text-gray-500 mt-2">点击进入<a href="phone-transcribe.vercel.app" target="_blank" class="text-blue-600 hover:underline">【📱手机适配版（调试中）】</a></p>
                 <p class="text-gray-500 mt-2">排版所限，目前仅适配电脑端💻。启动会话前，请先点击“设置”并输入访问码（仅需首次输入），后再填入个人有效付费api（每次需重复输入），再进行使用。（内部测试版，请勿外传！👀）</p>
                 <p class="text-green-500 mt-2">启动会话后，按 <kbd class="px-2 py-1.5 text-xs font-semibold text-green-800 bg-gray-100 border border-gray-200 rounded-lg">F9</kbd> 键，或点击【截断✂️Cut】按钮，分割音频片段。</p>
             </div>
@@ -123,7 +124,7 @@
                 <div id="apiModelSettings" class="hidden">
                      <div>
 <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2">【A.使用说明 Instructions】</h3>
-<p class="text-gray-500 mt-2"><b>1.🔑API 密钥配置：</b>进入设置后，您需要自行获取 API 密钥。针对不同的服务提供商，请查阅其官方文档以获取详细的 API 密钥查询与操作指南。通常情况下，配置 <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-600 hover:underline">OpenAI 的 API 密钥</a>足以支持系统的基本运行。然而，经过内部测试，我们强烈建议您同时获取 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Gemini 的 API 密钥</a>，因为 Gemini 在后续处理方面表现出更高级、更出色的性能。Gemini 提供免费额度 🎁，如需更高级的功能或更大的使用量，您可以绑定支付方式进行升级。</p>
+<p class="text-gray-500 mt-2"><b>1.🔑API 密钥配置：</b>进入设置后，您需要自行获取 API 密钥。针对不同的服务提供商，请查阅其官方文档以获取详细的 API 密钥查询与操作指南。通常情况下，配置 <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-600 hover:underline">OpenAI 的 API 密钥</a>足以支持系统的基本运行。然而，经过内部测试，我们强烈建议您同时获取 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Gemini 的 API 密钥</a>，因为 Gemini 在后续处理方面表现出更高级、更出色的性能。API一般是按量计费📊，目前阶段已经十分便宜💰，不会构成使用负担。另外，Gemini 提供免费额度 🎁，如需更高级的功能或更大的使用量，您可以绑定支付方式进行升级。</p>
 <p class="text-gray-500 mt-2"><b>2.🎙️会话稳定性与音频截取：</b>注意保持声源清晰干净，避免多声源。支持麦克风声源，不支持系统内部声源，故一般适合给现场会议或者外部播放源的转录与翻译。根据测试，会话启动后的前一到两段可能会出现不稳定情况，建议您提前截取两段测试音频 🔇，以排除干扰。在对话过程中，请尽量选择在一段完整、连贯的意群停顿处进行截取，要注意避免在句中截断。通常建议将每段音频截取为 3 到 4 句话，这样更适合页面显示，提升用户体验 ✨。</p>
 <p class="text-gray-500 mt-2"><b>3.✍️转录后的编辑与修改：</b>在完成首次转录后，系统会提供编辑修改功能。您可以根据实际听写印象，对关键内容进行修改，以提高转录结果的准确性。请注意，系统目前只提供一次修改机会 ⚠️，一旦您退出对话框或确认修改后，将无法再次进行编辑。在您进行修改操作时，录音将持续进行 🔄，您可以在完成修改工作后，根据时机截取下一段音频。</p>
 <p class="text-gray-500 mt-2"><b>4.⏯️录音暂停与恢复：</b>在不使用录音功能时，您可以选择暂停录音。暂停后，您可以随时方便地重新开始录音，无需从头设置。</p>
