@@ -32,8 +32,8 @@
             border-radius: 4px;
             padding: 2px 4px;
             margin: -3px -5px; /* Negative margin to fill the cell padding */
-            display: inline-block; /* allows text to flow while containing the border */
-            min-width: 100%; /* ensures it takes full width of parent td */
+            flex-grow: 1; /* Allows the text div to take up available space */
+            min-width: 0; /* Ensures it can shrink within flex container */
         }
         .editable-cell:focus {
             outline: none;
@@ -48,13 +48,23 @@
         .results-text p:not(:last-child) {
             margin-bottom: 0.75rem; /* 12px */
         }
+        .transcription-container {
+            display: flex;
+            align-items: flex-start; /* Align items to the start of the cross axis (top) */
+            justify-content: space-between; /* Pushes editable-cell to left, icon to right */
+            gap: 8px; /* Space between text and icon */
+        }
+        .edit-icon-wrapper {
+            flex-shrink: 0; /* Prevent the icon wrapper from shrinking */
+            align-self: flex-start; /* Align itself to the start, not necessarily center if text is multi-line */
+            padding-top: 2px; /* Small adjustment for visual alignment */
+        }
         .edit-icon {
             cursor: pointer;
-            padding: 4px;
+            padding: 2px; /* Smaller padding for a more compact icon */
             border-radius: 4px;
             transition: background-color 0.2s;
-            vertical-align: middle; /* Align icon vertically with text */
-            margin-left: 8px; /* Space between text and icon */
+            display: block; /* Ensures padding and sizing work as expected */
         }
         .edit-icon:hover {
             background-color: #e2e8f0; /* slate-200 */
@@ -101,9 +111,9 @@
                     <thead class="bg-slate-100 sticky top-0 z-10">
                         <tr>
                             <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 5%;">时戳🕖</th>
-                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 20%;">转录 Transcription</th>
+                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 25%;">转录 Transcription</th>
                             <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 25%;">校正 Corrected</th>
-                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 50%;">翻译en Translation</th>
+                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 45%;">翻译en Translation</th>
                         </tr>
                     </thead>
                     <tbody id="resultsTableBody" class="bg-white divide-y divide-gray-200">
@@ -406,10 +416,11 @@
             } catch (error) {
                 console.error("Whisper Error:", error);
                 // Update the original transcription cell with error
-                const transcriptionCellDiv = document.getElementById(segmentId).querySelector('.transcription-content');
-                if (transcriptionCellDiv) {
-                    transcriptionCellDiv.innerHTML = `<div class="text-red-600">转录失败: ${error.message}</div>`;
-                    transcriptionCellDiv.dataset.lastProcessedText = ''; // Clear last processed text on error
+                const transcriptionDivWrapper = document.getElementById(segmentId).querySelector('.transcription-container');
+                if (transcriptionDivWrapper) {
+                    transcriptionDivWrapper.innerHTML = `<div class="editable-cell text-red-600">转录失败: ${error.message}</div>`;
+                    const editableCell = transcriptionDivWrapper.querySelector('.editable-cell');
+                    if (editableCell) editableCell.dataset.lastProcessedText = ''; // Clear last processed text on error
                 }
                 updateTableCell(segmentId, 2, '---', 'error'); // Corrected column
                 updateTableCell(segmentId, 3, '---', 'error'); // Translation column
@@ -563,7 +574,8 @@
             };
 
             const handleDocumentClick = (event) => {
-                if (!editableDiv.contains(event.target) && event.target !== editIcon) { // Ensure click on icon doesn't trigger finalize
+                // Check if the click occurred outside the editableDiv AND not on the editIcon itself
+                if (!editableDiv.contains(event.target) && !editIcon.contains(event.target)) {
                     finalizeEdit();
                 }
             };
@@ -575,9 +587,8 @@
                 }, 0);
             };
             editableDiv.onblur = () => {
-                // Blur often happens before click event on a different element.
-                // We rely on handleDocumentClick to finalize the edit.
-                // If the blur wasn't caused by a click outside, it's fine.
+                // The blur event itself won't trigger finalize. It's handled by handleDocumentClick.
+                // This prevents issues if another element within the editableDiv is focused/clicked.
             };
 
             editableDiv.addEventListener('keydown', (event) => {
@@ -595,14 +606,16 @@
             const transcriptionCell = row.cells[1]; // Transcription cell
 
             transcriptionCell.innerHTML = `
-                <div class="transcription-content text-base results-text text-gray-900">
-                    <div class="editable-cell" data-last-processed-text="${text}">${text}</div>
-                    <button class="edit-icon" data-segment-id="${segmentId}" title="编辑转录">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 hover:text-blue-600">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
+                <div class="transcription-container">
+                    <div class="editable-cell text-base results-text text-gray-900" data-last-processed-text="${text}">${text}</div>
+                    <div class="edit-icon-wrapper">
+                        <button class="edit-icon" data-segment-id="${segmentId}" title="编辑转录">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 hover:text-blue-600">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             `;
             // Add event listener to the newly created edit button
@@ -652,20 +665,27 @@
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date().toLocaleTimeString()}</td>
                 <td class="px-6 py-4 whitespace-pre-wrap">
-                    <div class="transcription-content">
+                    <div class="transcription-container">
                         <div class="editable-cell">${loadingCellHtml}</div>
-                        <button class="edit-icon hidden" data-segment-id="${segmentId}" title="编辑转录">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 hover:text-blue-600">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
+                        <div class="edit-icon-wrapper hidden">
+                            <button class="edit-icon" data-segment-id="${segmentId}" title="编辑转录">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 hover:text-blue-600">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </td>
                 <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
                 <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
             `;
-            // Note: The edit icon is initially hidden. It will be shown when the transcription content is loaded.
+            // Add event listener to the edit button (which is initially hidden)
+            // It will be revealed by setTranscriptionCellInitialContent
+            row.querySelector(`.edit-icon`).addEventListener('click', (event) => {
+                const clickedSegmentId = event.currentTarget.dataset.segmentId;
+                makeCellEditable(clickedSegmentId);
+            });
             scrollToTop();
         }
 
@@ -677,13 +697,13 @@
             // If updating the transcription cell (index 1), handle it via setTranscriptionCellInitialContent or directly updating the editable-cell
             if (cellIndex === 1) {
                 const transcriptionDiv = cell.querySelector('.editable-cell');
-                const editIcon = cell.querySelector('.edit-icon');
+                const editIconWrapper = cell.querySelector('.edit-icon-wrapper');
                 if (transcriptionDiv) {
                     transcriptionDiv.innerHTML = `<div class="text-base results-text ${status === 'success' ? 'text-gray-900' : 'text-red-600'}">${content}</div>`;
                     if (status === 'success') {
-                        editIcon.classList.remove('hidden'); // Show icon only on successful transcription
+                        editIconWrapper.classList.remove('hidden'); // Show icon wrapper only on successful transcription
                     } else {
-                        editIcon.classList.add('hidden'); // Hide icon on error
+                        editIconWrapper.classList.add('hidden'); // Hide icon wrapper on error
                     }
                 }
             } else {
@@ -699,6 +719,7 @@
                 const regex = new RegExp(`(${terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
                 processedText = processedText.replace(regex, `<span class="highlight">$1</span>`);
             }
+            // Wrap each paragraph in a <p> tag, ensuring empty lines don't create empty <p> tags
             return processedText.split(/\n+/).filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
         }
 
