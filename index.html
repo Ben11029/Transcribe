@@ -45,9 +45,17 @@
             color: #dc2626; /* red-600 */
             font-weight: 500;
         }
-        .results-text p:not(:last-child) {
-            margin-bottom: 0.75rem; /* 12px */
+        /* --- MODIFIED CSS --- */
+        .results-text p {
+            margin-bottom: 0; /* Remove bottom margin from paragraphs */
+            padding-bottom: 0.25rem; /* Add small padding for spacing between lines if needed */
+            line-height: 1.4; /* Adjust line height for better readability */
         }
+        .results-text p:last-child {
+            padding-bottom: 0; /* No padding after the last paragraph */
+        }
+        /* --- END MODIFIED CSS --- */
+
         .transcription-container {
             display: flex;
             align-items: flex-start; /* Align items to the start of the cross axis (top) */
@@ -545,16 +553,16 @@
             if (!row) return;
             const transcriptionCell = row.cells[1]; // Get the transcription text cell
             const editableDiv = transcriptionCell.querySelector('.editable-cell');
-            const editIcon = transcriptionCell.querySelector('.edit-icon');
+            const editIconWrapper = transcriptionCell.querySelector('.edit-icon-wrapper');
 
-            if (!editableDiv || !editIcon) {
-                console.error('Editable cell div or edit icon not found for segment:', segmentId);
+            if (!editableDiv || !editIconWrapper) {
+                console.error('Editable cell div or edit icon wrapper not found for segment:', segmentId);
                 return;
             }
 
             editableDiv.contentEditable = true;
             editableDiv.focus();
-            editIcon.classList.add('hidden'); // Hide the edit icon when editing
+            editIconWrapper.classList.add('hidden'); // Hide the edit icon wrapper when editing
 
             const finalizeEdit = () => {
                 // Remove listeners to prevent re-triggering
@@ -564,7 +572,7 @@
                 const lastProcessedText = editableDiv.dataset.lastProcessedText;
                 
                 editableDiv.contentEditable = false; // Make it non-editable
-                editIcon.classList.remove('hidden'); // Show the edit icon again
+                editIconWrapper.classList.remove('hidden'); // Show the edit icon wrapper again
 
                 if (newText !== lastProcessedText) {
                     updateTableCell(segmentId, 2, loadingCellHtml, 'loading'); // Corrected column
@@ -575,7 +583,7 @@
 
             const handleDocumentClick = (event) => {
                 // Check if the click occurred outside the editableDiv AND not on the editIcon itself
-                if (!editableDiv.contains(event.target) && !editIcon.contains(event.target)) {
+                if (!editableDiv.contains(event.target) && !editIconWrapper.contains(event.target)) {
                     finalizeEdit();
                 }
             };
@@ -607,7 +615,7 @@
 
             transcriptionCell.innerHTML = `
                 <div class="transcription-container">
-                    <div class="editable-cell text-base results-text text-gray-900" data-last-processed-text="${text}">${text}</div>
+                    <div class="editable-cell text-base results-text text-gray-900" data-last-processed-text="${text}">${formatAndHighlightText(text, [])}</div>
                     <div class="edit-icon-wrapper">
                         <button class="edit-icon" data-segment-id="${segmentId}" title="编辑转录">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 hover:text-blue-600">
@@ -662,9 +670,10 @@
         function addPlaceholderRow(segmentId) {
             const row = resultsTableBody.insertRow(0);
             row.id = segmentId;
+            // --- MODIFIED HTML FOR PLACEHOLDER ROW ---
             row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date().toLocaleTimeString()}</td>
-                <td class="px-6 py-4 whitespace-pre-wrap">
+                <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500">${new Date().toLocaleTimeString()}</td>
+                <td class="px-6 py-2 whitespace-pre-wrap">
                     <div class="transcription-container">
                         <div class="editable-cell">${loadingCellHtml}</div>
                         <div class="edit-icon-wrapper hidden">
@@ -677,9 +686,10 @@
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
-                <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
+                <td class="px-6 py-2 whitespace-pre-wrap">${loadingCellHtml}</td>
+                <td class="px-6 py-2 whitespace-pre-wrap">${loadingCellHtml}</td>
             `;
+            // --- END MODIFIED HTML ---
             // Add event listener to the edit button (which is initially hidden)
             // It will be revealed by setTranscriptionCellInitialContent
             row.querySelector(`.edit-icon`).addEventListener('click', (event) => {
@@ -699,11 +709,21 @@
                 const transcriptionDiv = cell.querySelector('.editable-cell');
                 const editIconWrapper = cell.querySelector('.edit-icon-wrapper');
                 if (transcriptionDiv) {
-                    transcriptionDiv.innerHTML = `<div class="text-base results-text ${status === 'success' ? 'text-gray-900' : 'text-red-600'}">${content}</div>`;
-                    if (status === 'success') {
-                        editIconWrapper.classList.remove('hidden'); // Show icon wrapper only on successful transcription
-                    } else {
-                        editIconWrapper.classList.add('hidden'); // Hide icon wrapper on error
+                    // Only update content if it's the loading state, or if it's a new transcription
+                    // We don't want to overwrite user edits here.
+                    // When Whisper returns, setTranscriptionCellInitialContent is called, which handles the first populate.
+                    // Subsequent updates (e.g., error in later stages) will use this.
+                    if (status === 'loading') { // Only display loading HTML
+                        transcriptionDiv.innerHTML = content;
+                        editIconWrapper.classList.add('hidden'); // Hide icon during loading
+                    } else if (transcriptionDiv.dataset.lastProcessedText === undefined || transcriptionDiv.dataset.lastProcessedText === '' || transcriptionDiv.innerHTML.includes('处理中...')) {
+                         // Only update if it's initial content or previously loading/error
+                        transcriptionDiv.innerHTML = `<div class="text-base results-text ${status === 'success' ? 'text-gray-900' : 'text-red-600'}">${content}</div>`;
+                        if (status === 'success') {
+                            editIconWrapper.classList.remove('hidden'); // Show icon only on successful transcription
+                        } else {
+                            editIconWrapper.classList.add('hidden'); // Hide icon on error
+                        }
                     }
                 }
             } else {
