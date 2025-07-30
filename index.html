@@ -34,7 +34,8 @@
             margin: -3px -5px; /* Negative margin to fill the cell padding */
             flex-grow: 1; /* Allows the text div to take up available space */
             min-width: 0; /* Ensures it can shrink within flex container */
-            min-height: 1.5rem; /* Ensure a minimal height even if content is empty for visual consistency */
+            /* 移除 min-height 或减小它，让内容决定高度 */
+            /* min-height: 1.5rem; /* 保留一个小的最小高度以防完全空白 */
         }
         .editable-cell:focus {
             outline: none;
@@ -46,44 +47,54 @@
             color: #dc2626; /* red-600 */
             font-weight: 500;
         }
-        /* --- MODIFIED CSS FOR COMPACT ROWS --- */
+        /* --- 进一步优化的 CSS --- */
         .results-text p {
-            margin: 0; /* Remove all margins from paragraphs */
-            padding: 0; /* Remove all padding from paragraphs */
-            line-height: 1.3; /* Tighter line height */
+            margin: 0; /* 确保所有外边距都为0 */
+            padding: 0; /* 确保所有内边距都为0 */
+            line-height: 1.2; /* 更紧凑的行高 */
+            word-break: break-word; /* 确保长单词或无空格文本能换行 */
         }
-        /* Make sure the text itself is not too large */
         .text-base {
             font-size: 1rem; /* 16px */
-            line-height: 1.5rem; /* 24px default line height for text-base */
-        }
-        /* Ensure that the outer div in the cell doesn't add extra space */
-        .td-content-wrapper {
-            display: flex; /* Use flex to align content within cells if needed */
-            align-items: flex-start; /* Align content to the top */
+            /* line-height: 1.5rem; /* 移除 Tailwind 默认的 text-base 行高，让 p 标签的 line-height 生效 */
+            line-height: inherit; /* 继承父元素的行高 */
         }
 
-        /* Adjustments for the transcription cell container */
         .transcription-container {
             display: flex;
-            align-items: flex-start; /* Align items to the start of the cross axis (top) */
-            justify-content: space-between; /* Pushes editable-cell to left, icon to right */
-            gap: 8px; /* Space between text and icon */
+            align-items: flex-start; /* 文本和图标都从顶部对齐 */
+            justify-content: space-between;
+            gap: 8px;
         }
         .edit-icon-wrapper {
-            flex-shrink: 0; /* Prevent the icon wrapper from shrinking */
-            align-self: flex-start; /* Align itself to the start */
-            padding-top: 2px; /* Small adjustment for visual alignment with text */
+            flex-shrink: 0;
+            align-self: flex-start; /* 确保图标对齐到顶部 */
+            padding-top: 2px; /* 微调以更好地与文本对齐 */
         }
         .edit-icon {
             cursor: pointer;
-            padding: 2px; /* Smaller padding for a more compact icon */
+            padding: 2px;
             border-radius: 4px;
             transition: background-color 0.2s;
-            display: block; /* Ensures padding and sizing work as expected */
+            display: block;
         }
         .edit-icon:hover {
             background-color: #e2e8f0; /* slate-200 */
+        }
+        /* --- 针对 td 的行高调整 --- */
+        .results-table-cell {
+            padding: 0.25rem 0.5rem; /* 更小的上下内边距 (py-1 => 4px top/bottom) */
+        }
+
+        /* 覆盖 .whitespace-pre-wrap 可能带来的额外高度 */
+        .whitespace-pre-wrap {
+            white-space: pre-wrap; /* Preserve whitespace and wrap lines */
+            overflow-wrap: break-word; /* Break long words */
+        }
+
+        /* 确保时戳列不对整体高度产生影响 */
+        .timestamp-cell {
+            white-space: normal; /* 允许时间戳文本换行 */
         }
     </style>
 </head>
@@ -679,7 +690,7 @@
             const row = resultsTableBody.insertRow(0);
             row.id = segmentId;
             row.innerHTML = `
-                <td class="px-6 py-1 text-sm text-gray-500">${new Date().toLocaleTimeString()}</td>
+                <td class="px-6 py-1 timestamp-cell text-sm text-gray-500">${new Date().toLocaleTimeString()}</td>
                 <td class="px-6 py-1 whitespace-pre-wrap">
                     <div class="transcription-container">
                         <div class="editable-cell">${loadingCellHtml}</div>
@@ -696,8 +707,6 @@
                 <td class="px-6 py-1 whitespace-pre-wrap">${loadingCellHtml}</td>
                 <td class="px-6 py-1 whitespace-pre-wrap">${loadingCellHtml}</td>
             `;
-            // Add event listener to the edit button (which is initially hidden)
-            // It will be revealed by setTranscriptionCellInitialContent
             row.querySelector(`.edit-icon`).addEventListener('click', (event) => {
                 const clickedSegmentId = event.currentTarget.dataset.segmentId;
                 makeCellEditable(clickedSegmentId);
@@ -710,8 +719,7 @@
             if (!row || !row.cells[cellIndex]) return;
             const cell = row.cells[cellIndex];
 
-            // If updating the transcription cell (index 1), special handling for editable-cell and icon visibility
-            if (cellIndex === 1) {
+            if (cellIndex === 1) { // Transcription cell
                 const transcriptionDiv = cell.querySelector('.editable-cell');
                 const editIconWrapper = cell.querySelector('.edit-icon-wrapper');
                 if (transcriptionDiv) {
@@ -722,7 +730,7 @@
                         editIconWrapper.classList.add('hidden'); // Hide icon wrapper on error
                     }
                 }
-            } else {
+            } else { // Other cells
                 cell.innerHTML = `<div class="text-base results-text ${status === 'success' ? 'text-gray-900' : 'text-red-600'}">${content}</div>`;
             }
         }
@@ -735,7 +743,7 @@
                 const regex = new RegExp(`(${terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
                 processedText = processedText.replace(regex, `<span class="highlight">$1</span>`);
             }
-            // Wrap each paragraph in a <p> tag, ensuring empty lines don't create empty <p> tags
+            // Wrap each non-empty line in a <p> tag
             return processedText.split(/\n+/).filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
         }
 
