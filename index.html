@@ -75,9 +75,9 @@
             </div>
 
             <div id="status-container" class="h-6 flex items-center mb-4">
-                 <div class="flex items-center text-sm font-medium text-gray-600">
-                     <div id="status-indicator" class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
-                     <span id="status-text">会话未开始 Audio not started</span>
+                   <div class="flex items-center text-sm font-medium text-gray-600">
+                       <div id="status-indicator" class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
+                       <span id="status-text">会话未开始 Audio not started</span>
                 </div>
             </div>
         </div>
@@ -146,19 +146,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                             <div>
                                 <label for="transcriptionModelSelect" class="block text-base font-medium text-gray-700 mb-1"><b>转录模型 Transcribing Models</b></label>
-                                 <select id="transcriptionModelSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                    <option value="gpt-4o-mini-transcribe">GPT-4o-mini-transcribe (默认)</option>
-                                    <option value="whisper-1">Whisper-1（总体都比4o-mini-transcribe差）</option>
-                                </select>
+                                   <select id="transcriptionModelSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                       <option value="gpt-4o-mini-transcribe">GPT-4o-mini-transcribe (默认)</option>
+                                       <option value="whisper-1">Whisper-1（总体都比4o-mini-transcribe差）</option>
+                                   </select>
                             </div>
                             <div>
                                 <label for="processingEngineSelect" class="block text-base font-medium text-gray-700 mb-1"><b>处理引擎 Processing Models</b></label>
-                                 <select id="processingEngineSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                     <option value="gpt-4o-mini">OpenAI GPT-4o mini (默认)</option>
-                                     <option value="gpt-4o">OpenAI GPT-4o（贵一些，效果更好）</option>
-                                     <option value="gemini-2.5-flash">Gemini 2.5 Flash（比Openai便宜，效果更好，有免费额度）</option>
-                                     <option value="gemini-2.5-pro">Gemini 2.5 Pro（比Flash贵一倍，更好）</option>
-                                </select>
+                                   <select id="processingEngineSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                       <option value="gpt-4o-mini">OpenAI GPT-4o mini (默认)</option>
+                                       <option value="gpt-4o">OpenAI GPT-4o（贵一些，效果更好）</option>
+                                       <option value="gemini-2.5-flash">Gemini 2.5 Flash（比Openai便宜，效果更好，有免费额度）</option>
+                                       <option value="gemini-2.5-pro">Gemini 2.5 Pro（比Flash贵一倍，更好）</option>
+                                   </select>
                             </div>
                         </div>
                     </div>
@@ -265,9 +265,7 @@
                 unlockBtn.textContent = '解锁 Unlock';
             }
         }
-
         
-
         function lockApp() {
             sessionBtn.disabled = true;
             pauseBtn.disabled = true;
@@ -397,7 +395,9 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error?.message || '未知 Whisper API 错误');
 
+                // Pass the initial transcription text to makeCellEditable
                 makeCellEditable(segmentId, data.text);
+                // Start the LLM processing chain with the initial transcription
                 correctAndPolishText(data.text, segmentId);
             } catch (error) {
                 console.error("Whisper Error:", error);
@@ -420,7 +420,7 @@
                 });
                 const data = await response.json();
                 if (!response.ok || !data.candidates || data.candidates.length === 0) {
-                     throw new Error(data.error?.message || 'Gemini API 返回无效响应');
+                    throw new Error(data.error?.message || 'Gemini API 返回无效响应');
                 }
                 return data.candidates[0].content.parts[0].text;
             } else { // OpenAI models
@@ -446,11 +446,13 @@
             }
         }
 
-        async function correctAndPolishText(originalText, segmentId) {
-            const prompt = `以下是一段佛教讲座的语音转录，其中可能包含错别字和谐音字。请纠正所有错别字和谐音字，使用简体，适当分段，使文本流畅、准确，并进行适当的分段。请直接返回处理后的文本，不要添加任何额外的解释或标签。\n\n原始文本：\n"${originalText}"`;
+        // Modified: Now takes originalInputText to update lastProcessedText at the end of the chain
+        async function correctAndPolishText(originalInputText, segmentId) {
+            const prompt = `以下是一段佛教讲座的语音转录，其中可能包含错别字和谐音字。请纠正所有错别字和谐音字，使用简体，适当分段，使文本流畅、准确，并进行适当的分段。请直接返回处理后的文本，不要添加任何额外的解释或标签。\n\n原始文本：\n"${originalInputText}"`;
             try {
                 const polishedText = await callLLM(prompt);
-                identifyAndHighlightChineseTerms(polishedText, segmentId);
+                // Pass originalInputText down the chain
+                await identifyAndHighlightChineseTerms(polishedText, segmentId, originalInputText);
             } catch (error) {
                 console.error("Processing Error:", error);
                 updateTableCell(segmentId, 2, `校正失败: ${error.message}`, 'error');
@@ -458,7 +460,8 @@
             }
         }
 
-        async function identifyAndHighlightChineseTerms(text, segmentId) {
+        // Modified: Now takes originalInputText to pass down the chain
+        async function identifyAndHighlightChineseTerms(text, segmentId, originalInputText) {
             const prompt = `从以下文本中，识别出与佛教修行(修证)、学术相关的术语。请以JSON数组的格式返回这些词语，例如：["词语一", "词语二"]。如果找不到，请返回空数组 []。\n\n文本：\n"${text}"`;
             try {
                 const rawResponse = await callLLM(prompt);
@@ -466,30 +469,37 @@
                 const terms = JSON.parse(termsJson);
                 const highlightedHtml = formatAndHighlightText(text, terms);
                 updateTableCell(segmentId, 2, highlightedHtml, 'success');
-                translateText(text, terms, segmentId);
+                // Pass originalInputText down the chain
+                await translateText(text, terms, segmentId, originalInputText);
             } catch (error) {
                 console.error("Chinese Term ID Error:", error);
                 const formattedText = formatAndHighlightText(text, []);
                 updateTableCell(segmentId, 2, formattedText, 'success'); // Show formatted unhighlighted text on error
-                translateText(text, [], segmentId); // Proceed without terms
+                // Even if term identification fails, still try to translate, pass originalInputText
+                await translateText(text, [], segmentId, originalInputText);
             }
         }
 
-        async function translateText(textToTranslate, chineseTerms, segmentId) {
+        // Modified: Now takes originalInputText to pass down the chain
+        async function translateText(textToTranslate, chineseTerms, segmentId, originalInputText) {
             const prompt = `请将以下中文文本直接翻译成英文，适当分段，不要加引号，不要回复其他内容。\n\n中文文本：\n"${textToTranslate}"`;
             try {
                 const translatedText = await callLLM(prompt);
-                identifyAndHighlightEnglishTerms(translatedText, chineseTerms, segmentId);
+                // Pass originalInputText to the final step
+                await identifyAndHighlightEnglishTerms(translatedText, chineseTerms, segmentId, originalInputText);
             } catch (error) {
                 console.error("Translation Error:", error);
                 updateTableCell(segmentId, 3, `翻译失败: ${error.message}`, 'error');
             }
         }
 
-        async function identifyAndHighlightEnglishTerms(text, chineseTerms, segmentId) {
+        // Modified: This is the final step, now updates lastProcessedText
+        async function identifyAndHighlightEnglishTerms(text, chineseTerms, segmentId, originalInputText) {
             if (chineseTerms.length === 0) {
                 const formattedText = formatAndHighlightText(text, []);
                 updateTableCell(segmentId, 3, formattedText, 'success');
+                // Final step, update lastProcessedText
+                updateLastProcessedText(segmentId, originalInputText);
                 return;
             }
             const prompt = `From the following English text, identify the academic Buddhist terms that correspond to the concepts in the provided Chinese list. Return the identified English terms as a JSON array, for example: ["Term 1", "Term 2"]. If none are found, return an empty array [].\n\nEnglish Text:\n"${text}"\n\nOriginal Chinese Terms for reference:\n${JSON.stringify(chineseTerms)}`;
@@ -499,11 +509,106 @@
                 const terms = JSON.parse(termsJson);
                 const highlightedHtml = formatAndHighlightText(text, terms);
                 updateTableCell(segmentId, 3, highlightedHtml, 'success');
+                // Final step, update lastProcessedText
+                updateLastProcessedText(segmentId, originalInputText);
             } catch (error) {
                 console.error("English Term ID Error:", error);
                 const formattedText = formatAndHighlightText(text, []);
-                updateTableCell(segmentId, 3, formattedText, 'success'); // Show formatted unhighlighted text on error
+                updateTableCell(segmentId, 3, formattedText, 'success');
+                // Even if highlighting fails, the translation itself was successful, so update lastProcessedText
+                updateLastProcessedText(segmentId, originalInputText);
             }
+        }
+
+        // New helper function to update lastProcessedText on the transcription cell
+        function updateLastProcessedText(segmentId, text) {
+            const row = document.getElementById(segmentId);
+            if (row) {
+                const transcriptionCellDiv = row.cells[1].querySelector('.editable-cell');
+                if (transcriptionCellDiv) {
+                    transcriptionCellDiv.dataset.lastProcessedText = text;
+                }
+            }
+        }
+
+        // Modified makeCellEditable to use dataset.lastProcessedText for comparison
+        function makeCellEditable(segmentId, text) {
+            const row = document.getElementById(segmentId);
+            if (!row) return;
+            const cell = row.cells[1]; // 获取转录文本的单元格
+
+            // 创建一个可编辑的 div 元素
+            let div = cell.querySelector('.editable-cell');
+            if (!div) {
+                div = document.createElement('div');
+                div.className = 'editable-cell';
+                div.contentEditable = true; // 始终保持可编辑
+                div.textContent = text;
+                // Initialize lastProcessedText with the text that was just transcribed.
+                // This will be updated again after the full LLM pipeline completes.
+                div.dataset.lastProcessedText = text;
+                cell.innerHTML = '';
+                cell.appendChild(div);
+            } else {
+                // If div already exists, update its text content.
+                // We only update div.textContent if the incoming text is different,
+                // to avoid overwriting a user's ongoing edit.
+                if (div.textContent !== text) {
+                    div.textContent = text;
+                    // When a new transcription comes in, reset lastProcessedText to the new transcription
+                    div.dataset.lastProcessedText = text;
+                }
+                div.contentEditable = true; // Ensure it's editable
+            }
+
+
+            // 定义编辑完成时的逻辑
+            const finalizeEdit = () => {
+                // 移除监听器，防止重复触发
+                document.removeEventListener('mousedown', handleDocumentClick, true);
+
+                const newText = div.textContent;
+                // Get the text that was last processed by LLMs
+                const lastProcessedText = div.dataset.lastProcessedText; 
+
+                // 如果当前文本与上次LLM处理的文本不同，则重新进行校正和翻译
+                if (newText !== lastProcessedText) {
+                    updateTableCell(segmentId, 2, loadingCellHtml, 'loading'); // 更新校正列为加载状态
+                    updateTableCell(segmentId, 3, loadingCellHtml, 'loading'); // 更新翻译列为加载状态
+                    correctAndPolishText(newText, segmentId); // 重新处理文本
+                }
+            };
+
+            // 处理点击文档其他区域的逻辑
+            const handleDocumentClick = (event) => {
+                // 如果点击发生在可编辑 div 外部，则完成编辑
+                if (!div.contains(event.target)) {
+                    finalizeEdit();
+                }
+            };
+
+            // 当 div 获得焦点时，添加点击文档监听器
+            div.onfocus = () => { // 使用 onfocus 而不是 addEventListener('focus') 来防止重复添加
+                setTimeout(() => { // 延迟添加，确保不会立即触发
+                    document.addEventListener('mousedown', handleDocumentClick, true);
+                }, 0);
+            };
+            // 当 div 失去焦点时，移除点击文档监听器
+            div.onblur = () => {
+                document.removeEventListener('mousedown', handleDocumentClick, true);
+            };
+
+
+            // 当在 div 中按下 Enter 键时，完成编辑
+            div.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // 阻止默认的换行行为
+                    finalizeEdit();
+                }
+            });
+
+            // 确保在转录完成后，该单元格立即获得焦点，方便用户开始编辑
+            div.focus();
         }
 
         function extractJson(text) {
@@ -549,58 +654,6 @@
                 <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
             `;
             scrollToTop();
-        }
-
-        function makeCellEditable(segmentId, text) {
-            const row = document.getElementById(segmentId);
-            if (!row) return;
-            const cell = row.cells[1];
-
-            const div = document.createElement('div');
-            div.className = 'editable-cell';
-            div.contentEditable = true;
-            div.textContent = text;
-            div.dataset.originalText = text;
-
-            const finalizeEdit = () => {
-                if (div.contentEditable !== 'true') return;
-
-                div.contentEditable = false;
-                div.classList.remove('editable-cell');
-                document.removeEventListener('mousedown', handleDocumentClick, true);
-
-                const newText = div.textContent;
-                const originalText = div.dataset.originalText;
-
-                if (newText !== originalText) {
-                    updateTableCell(segmentId, 2, loadingCellHtml, 'loading');
-                    updateTableCell(segmentId, 3, loadingCellHtml, 'loading');
-                    correctAndPolishText(newText, segmentId);
-                }
-            };
-
-            const handleDocumentClick = (event) => {
-                if (!div.contains(event.target)) {
-                    finalizeEdit();
-                }
-            };
-
-            div.addEventListener('focus', () => {
-                setTimeout(() => {
-                    document.addEventListener('mousedown', handleDocumentClick, true);
-                }, 0);
-            });
-
-            div.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    finalizeEdit();
-                }
-            });
-
-            cell.innerHTML = '';
-            cell.appendChild(div);
-            div.focus();
         }
 
         function updateTableCell(segmentId, cellIndex, content, status) {
