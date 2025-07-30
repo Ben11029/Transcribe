@@ -46,15 +46,6 @@
         .results-text p:not(:last-child) {
             margin-bottom: 0.75rem; /* 12px */
         }
-        .edit-icon {
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-        .edit-icon:hover {
-            background-color: #e2e8f0; /* slate-200 */
-        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
@@ -84,9 +75,9 @@
             </div>
 
             <div id="status-container" class="h-6 flex items-center mb-4">
-                    <div class="flex items-center text-sm font-medium text-gray-600">
-                        <div id="status-indicator" class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
-                        <span id="status-text">会话未开始 Audio not started</span>
+                   <div class="flex items-center text-sm font-medium text-gray-600">
+                       <div id="status-indicator" class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
+                       <span id="status-text">会话未开始 Audio not started</span>
                 </div>
             </div>
         </div>
@@ -97,8 +88,8 @@
                     <thead class="bg-slate-100 sticky top-0 z-10">
                         <tr>
                             <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 5%;">时戳🕖</th>
-                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 17%;">转录 Transcription</th>
-                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 3%;">编辑</th> <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 23%;">校正 Corrected</th>
+                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 18%;">转录 Transcription</th>
+                            <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 25%;">校正 Corrected</th>
                             <th scope="col" class="py-1 px-1 text-left text-base font-bold text-slate-700 tracking-wider" style="width: 52%;">翻译en Translation</th>
                         </tr>
                     </thead>
@@ -405,15 +396,14 @@
                 if (!response.ok) throw new Error(data.error?.message || '未知 Whisper API 错误');
 
                 // Pass the initial transcription text to makeCellEditable
-                // makeCellEditable(segmentId, data.text); // This line is now handled by addPlaceholderRow setting the text and adding the click listener
-                updateTranscriptionCellContent(segmentId, data.text); // Update the content after transcription
+                makeCellEditable(segmentId, data.text);
                 // Start the LLM processing chain with the initial transcription
                 correctAndPolishText(data.text, segmentId);
             } catch (error) {
                 console.error("Whisper Error:", error);
-                updateTableCell(segmentId, 1, `转录失败: ${error.message}`, 'error'); // Update the original transcription cell with error
-                updateTableCell(segmentId, 3, '---', 'error'); // Corrected column
-                updateTableCell(segmentId, 4, '---', 'error'); // Translation column
+                updateTableCell(segmentId, 1, `转录失败: ${error.message}`, 'error');
+                updateTableCell(segmentId, 2, '---', 'error');
+                updateTableCell(segmentId, 3, '---', 'error');
             }
         }
 
@@ -465,8 +455,8 @@
                 await identifyAndHighlightChineseTerms(polishedText, segmentId, originalInputText);
             } catch (error) {
                 console.error("Processing Error:", error);
-                updateTableCell(segmentId, 3, `校正失败: ${error.message}`, 'error');
-                updateTableCell(segmentId, 4, '---', 'error');
+                updateTableCell(segmentId, 2, `校正失败: ${error.message}`, 'error');
+                updateTableCell(segmentId, 3, '---', 'error');
             }
         }
 
@@ -478,13 +468,13 @@
                 const termsJson = extractJson(rawResponse);
                 const terms = JSON.parse(termsJson);
                 const highlightedHtml = formatAndHighlightText(text, terms);
-                updateTableCell(segmentId, 3, highlightedHtml, 'success');
+                updateTableCell(segmentId, 2, highlightedHtml, 'success');
                 // Pass originalInputText down the chain
                 await translateText(text, terms, segmentId, originalInputText);
             } catch (error) {
                 console.error("Chinese Term ID Error:", error);
                 const formattedText = formatAndHighlightText(text, []);
-                updateTableCell(segmentId, 3, formattedText, 'success'); // Show formatted unhighlighted text on error
+                updateTableCell(segmentId, 2, formattedText, 'success'); // Show formatted unhighlighted text on error
                 // Even if term identification fails, still try to translate, pass originalInputText
                 await translateText(text, [], segmentId, originalInputText);
             }
@@ -499,7 +489,7 @@
                 await identifyAndHighlightEnglishTerms(translatedText, chineseTerms, segmentId, originalInputText);
             } catch (error) {
                 console.error("Translation Error:", error);
-                updateTableCell(segmentId, 4, `翻译失败: ${error.message}`, 'error');
+                updateTableCell(segmentId, 3, `翻译失败: ${error.message}`, 'error');
             }
         }
 
@@ -507,7 +497,7 @@
         async function identifyAndHighlightEnglishTerms(text, chineseTerms, segmentId, originalInputText) {
             if (chineseTerms.length === 0) {
                 const formattedText = formatAndHighlightText(text, []);
-                updateTableCell(segmentId, 4, formattedText, 'success');
+                updateTableCell(segmentId, 3, formattedText, 'success');
                 // Final step, update lastProcessedText
                 updateLastProcessedText(segmentId, originalInputText);
                 return;
@@ -518,13 +508,13 @@
                 const termsJson = extractJson(rawResponse);
                 const terms = JSON.parse(termsJson);
                 const highlightedHtml = formatAndHighlightText(text, terms);
-                updateTableCell(segmentId, 4, highlightedHtml, 'success');
+                updateTableCell(segmentId, 3, highlightedHtml, 'success');
                 // Final step, update lastProcessedText
                 updateLastProcessedText(segmentId, originalInputText);
             } catch (error) {
                 console.error("English Term ID Error:", error);
                 const formattedText = formatAndHighlightText(text, []);
-                updateTableCell(segmentId, 4, formattedText, 'success');
+                updateTableCell(segmentId, 3, formattedText, 'success');
                 // Even if highlighting fails, the translation itself was successful, so update lastProcessedText
                 updateLastProcessedText(segmentId, originalInputText);
             }
@@ -541,75 +531,85 @@
             }
         }
 
-        // Modified to be triggered by edit icon click and for initial text update
-        function makeCellEditable(segmentId) {
+        // Modified makeCellEditable to use dataset.lastProcessedText for comparison
+        function makeCellEditable(segmentId, text) {
             const row = document.getElementById(segmentId);
             if (!row) return;
-            const cell = row.cells[1]; // Get the transcription text cell
-            const div = cell.querySelector('.editable-cell');
+            const cell = row.cells[1]; // 获取转录文本的单元格
 
+            // 创建一个可编辑的 div 元素
+            let div = cell.querySelector('.editable-cell');
             if (!div) {
-                console.error('Editable cell div not found for segment:', segmentId);
-                return;
+                div = document.createElement('div');
+                div.className = 'editable-cell';
+                div.contentEditable = true; // 始终保持可编辑
+                div.textContent = text;
+                // Initialize lastProcessedText with the text that was just transcribed.
+                // This will be updated again after the full LLM pipeline completes.
+                div.dataset.lastProcessedText = text;
+                cell.innerHTML = '';
+                cell.appendChild(div);
+            } else {
+                // If div already exists, update its text content.
+                // We only update div.textContent if the incoming text is different,
+                // to avoid overwriting a user's ongoing edit.
+                if (div.textContent !== text) {
+                    div.textContent = text;
+                    // When a new transcription comes in, reset lastProcessedText to the new transcription
+                    div.dataset.lastProcessedText = text;
+                }
+                div.contentEditable = true; // Ensure it's editable
             }
 
-            // Define logic for when editing is complete
+
+            // 定义编辑完成时的逻辑
             const finalizeEdit = () => {
+                // 移除监听器，防止重复触发
                 document.removeEventListener('mousedown', handleDocumentClick, true);
 
                 const newText = div.textContent;
-                const lastProcessedText = div.dataset.lastProcessedText;
+                // Get the text that was last processed by LLMs
+                const lastProcessedText = div.dataset.lastProcessedText; 
 
+                // 如果当前文本与上次LLM处理的文本不同，则重新进行校正和翻译
                 if (newText !== lastProcessedText) {
-                    updateTableCell(segmentId, 3, loadingCellHtml, 'loading'); // Update corrected column to loading
-                    updateTableCell(segmentId, 4, loadingCellHtml, 'loading'); // Update translation column to loading
-                    correctAndPolishText(newText, segmentId); // Reprocess the text
+                    updateTableCell(segmentId, 2, loadingCellHtml, 'loading'); // 更新校正列为加载状态
+                    updateTableCell(segmentId, 3, loadingCellHtml, 'loading'); // 更新翻译列为加载状态
+                    correctAndPolishText(newText, segmentId); // 重新处理文本
                 }
             };
 
+            // 处理点击文档其他区域的逻辑
             const handleDocumentClick = (event) => {
+                // 如果点击发生在可编辑 div 外部，则完成编辑
                 if (!div.contains(event.target)) {
                     finalizeEdit();
                 }
             };
 
-            div.onfocus = () => {
-                setTimeout(() => {
+            // 当 div 获得焦点时，添加点击文档监听器
+            div.onfocus = () => { // 使用 onfocus 而不是 addEventListener('focus') 来防止重复添加
+                setTimeout(() => { // 延迟添加，确保不会立即触发
                     document.addEventListener('mousedown', handleDocumentClick, true);
                 }, 0);
             };
-
+            // 当 div 失去焦点时，移除点击文档监听器
             div.onblur = () => {
                 document.removeEventListener('mousedown', handleDocumentClick, true);
             };
 
+
+            // 当在 div 中按下 Enter 键时，完成编辑
             div.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
-                    event.preventDefault();
+                    event.preventDefault(); // 阻止默认的换行行为
                     finalizeEdit();
                 }
             });
 
+            // 确保在转录完成后，该单元格立即获得焦点，方便用户开始编辑
             div.focus();
         }
-
-        // New function to update the content of the transcription cell after initial transcription
-        function updateTranscriptionCellContent(segmentId, text) {
-            const row = document.getElementById(segmentId);
-            if (!row) return;
-            const cell = row.cells[1]; // Transcription cell
-            let div = cell.querySelector('.editable-cell');
-            if (!div) {
-                div = document.createElement('div');
-                div.className = 'editable-cell';
-                div.contentEditable = true;
-                cell.innerHTML = '';
-                cell.appendChild(div);
-            }
-            div.textContent = text;
-            div.dataset.lastProcessedText = text;
-        }
-
 
         function extractJson(text) {
             const match = text.match(/```json\s*([\s\S]*?)\s*```/);
@@ -649,32 +649,17 @@
             row.id = segmentId;
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date().toLocaleTimeString()}</td>
-                <td class="px-6 py-4 whitespace-pre-wrap"><div class="editable-cell">${loadingCellHtml}</div></td>
-                <td class="px-2 py-4 whitespace-nowrap text-center">
-                    <button class="edit-icon" data-segment-id="${segmentId}" title="Edit Transcription">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 hover:text-blue-600">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                </td>
+                <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
                 <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
                 <td class="px-6 py-4 whitespace-pre-wrap">${loadingCellHtml}</td>
             `;
-            // Add event listener to the newly created edit button
-            row.querySelector(`.edit-icon`).addEventListener('click', (event) => {
-                const clickedSegmentId = event.currentTarget.dataset.segmentId;
-                makeCellEditable(clickedSegmentId);
-            });
             scrollToTop();
         }
 
         function updateTableCell(segmentId, cellIndex, content, status) {
             const row = document.getElementById(segmentId);
-            // Adjust cellIndex because a new column was added at index 2 (edit icon)
-            const adjustedCellIndex = cellIndex >= 2 ? cellIndex + 1 : cellIndex; 
-            if (!row || !row.cells[adjustedCellIndex]) return;
-            const cell = row.cells[adjustedCellIndex];
+            if (!row || !row.cells[cellIndex]) return;
+            const cell = row.cells[cellIndex];
 
             if (status === 'loading') {
                 cell.innerHTML = content;
