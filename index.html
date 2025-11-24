@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧘实时佛教语音🙏转录与翻译🐉 Pro</title>
+    <title>🧘实时佛教语音🙏校正与翻译🐉 Pro （电脑版）</title>
     <link rel="icon" href="favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,7 +44,66 @@
             font-weight: 500;
         }
         .results-text p:not(:last-child) {
-            margin-bottom: 0.75rem; /* 12px */
+            margin-bottom: 0;
+        }
+        .results-text {
+            display: block;
+            line-height: 1.3;
+            text-align: left !important;
+            margin: 0;
+            padding: 0;
+            word-wrap: break-word;
+        }
+        
+        /* Waveform Visualization */
+        #waveform-canvas {
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 8px;
+        }
+        
+        /* Enhanced Loading Animation */
+        .loading-pulse {
+            animation: loadingPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.95); }
+        }
+        
+        /* Success Animation */
+        @keyframes successSlideIn {
+            0% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .success-row {
+            animation: successSlideIn 0.5s ease-out;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            animation: toastSlideIn 0.3s ease-out;
+        }
+        @keyframes toastSlideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast.hide {
+            animation: toastSlideOut 0.3s ease-out forwards;
+        }
+        @keyframes toastSlideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
         }
     </style>
 </head>
@@ -52,10 +111,10 @@
     <div class="w-[98vw] max-w-none mx-auto p-6 md:p-8 bg-white rounded-2xl shadow-2xl flex flex-col" style="height: 99vh;">
 
         <div class="flex-shrink-0">
-            <div class="text-center mb-4">
-                <h1 class="text-3xl font-bold text-gray-900">🧘实时佛教语音🙏转录与翻译🐉 Pro</h1>
+            <div class="text-center mb-2">
+                <h1 class="text-3xl font-bold text-gray-900">🧘实时佛教语音🙏校正与翻译🐉 Pro （电脑版）</h1>
                 <p class="text-gray-500 mt-2">排版所限，此版本目前仅适配电脑端💻。手机端请点击进入<a href="https://phone-transcribe.vercel.app/" target="_blank" class="text-blue-600 hover:underline">【📱手机适配版（调试中）】</a></p>
-                <p class="text-gray-500 mt-2">启动会话前，请先点击“设置”并输入访问码（仅需首次输入），后再填入个人有效付费api（每次需重复输入），再进行使用。（内部测试版，请勿外传！👀）</p>
+                <p class="text-gray-500 mt-2">启动会话前，请先点击"设置"并输入访问码（仅需首次输入），后再填入个人有效付费api（每次需重复输入），再进行使用。（内部测试版，请勿外传！👀）</p>
                 <p class="text-green-500 mt-2">启动会话后，按 <kbd class="px-2 py-1.5 text-xs font-semibold text-green-800 bg-gray-100 border border-gray-200 rounded-lg">F9</kbd> 键，或点击【截断✂️Cut】按钮，分割音频片段。</p>
             </div>
 
@@ -74,10 +133,27 @@
                 </button>
             </div>
 
-            <div id="status-container" class="h-6 flex items-center mb-4">
+            <div id="status-container" class="h-6 flex items-center mb-2">
                    <div class="flex items-center text-sm font-medium text-gray-600">
                        <div id="status-indicator" class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
                        <span id="status-text">会话未开始 Audio not started</span>
+                </div>
+            </div>
+            
+            <div id="progress-container" class="hidden mb-4">
+                <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between mt-1 text-xs text-gray-600">
+                    <span id="progress-text">准备中...</span>
+                    <span id="progress-percentage">0%</span>
+                </div>
+            </div>
+            
+            <div id="waveform-container" class="hidden mb-4">
+                <div class="bg-slate-50 rounded-lg p-3 border border-gray-200">
+                    <canvas id="waveform-canvas"></canvas>
+                    <div class="text-center text-sm text-gray-600 mt-2">录音时长: <span id="recording-duration">00:00</span></div>
                 </div>
             </div>
         </div>
@@ -100,10 +176,41 @@
         </div>
     </div>
 
+    <!-- Floating Export Button -->
+    <button id="exportBtn" class="fixed bottom-4 right-4 bg-purple-600 text-white font-bold py-2.5 px-3 rounded-full shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all transform hover:scale-105 z-40 flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span class="text-sm">导出</span>
+    </button>
+
+    <div id="exportModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-900">导出数据</h2>
+                <button id="closeExportBtn" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <button id="exportTxtBtn" class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    导出为 TXT
+                </button>
+                <button id="exportCsvBtn" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="8" y2="13"></line><line x1="12" y1="13" x2="12" y2="13"></line><line x1="16" y1="13" x2="16" y2="13"></line></svg>
+                    导出为 CSV
+                </button>
+                <button id="exportJsonBtn" class="w-full bg-purple-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-600 transition-all flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    导出为 JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="settingsModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-6xl m-4">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-6xl m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="w-1/2 mx-auto text-2xl font-bold text-gray-900">【使用说明与设置 Instructions and Settings】</h2>
+                <h2 class="text-xl font-bold text-gray-900">【使用说明与设置 Instructions and Settings】</h2>
                 <button id="closeSettingsBtn" class="text-gray-400 hover:text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
@@ -114,7 +221,13 @@
                     <div class="pt-4 space-y-2">
                         <div>
                             <label for="accessCodeInput" class="block text-sm font-medium text-gray-700 mb-1">访问码 Access Code （一般只需要首次输入 First time needed only）</label>
-                            <input type="password" id="accessCodeInput" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="请输入访问码以解锁应用 Please enter the access code to unlock the application.">
+                            <div class="relative">
+                                <input type="password" id="accessCodeInput" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="请输入访问码以解锁应用 Please enter the access code to unlock the application.">
+                                <button type="button" id="toggleAccessCodeVisibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+                                    <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                </button>
+                            </div>
                         </div>
                         <p id="accessCodeError" class="text-sm text-red-600 hidden">访问码错误，请重试。The access code is incorrect. Please try again.</p>
                         <button id="unlockBtn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700">解锁 Unlock</button>
@@ -124,10 +237,11 @@
                 <div id="apiModelSettings" class="hidden">
                      <div>
 <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2">【A.使用说明 Instructions】</h3>
-<p class="text-gray-500 mt-2"><b>1.🔑API 密钥配置：</b>进入设置后，您需要自行获取 API 密钥。针对不同的服务提供商，请查阅其官方文档以获取详细的 API 密钥查询与操作指南。通常情况下，配置 <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-600 hover:underline">OpenAI 的 API 密钥</a>足以支持系统的基本运行。然而，经过内部测试，我们强烈建议您同时获取 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Gemini 的 API 密钥</a>，因为 Gemini 在后续处理方面表现出更高级、更出色的性能。API一般是按量计费📊，目前阶段已经十分便宜💰，不会构成使用负担。另外，Gemini 提供免费额度 🎁，如需更高级的功能或更大的使用量，您可以绑定支付方式进行升级。</p>
-<p class="text-gray-500 mt-2"><b>2.🎙️会话稳定性与音频截取：</b>注意保持声源清晰干净，避免多声源。支持麦克风声源，不支持系统内部声源，故一般适合给现场会议或者外部播放源的转录与翻译。根据测试，会话启动后的前一到两段可能会出现不稳定情况，建议您提前截取两段测试音频 🔇，以排除干扰。在对话过程中，请尽量选择在一段完整、连贯的意群停顿处进行截取，要注意避免在句中截断。通常建议将每段音频截取为 3 到 4 句话，这样更适合页面显示，提升用户体验 ✨。</p>
-<p class="text-gray-500 mt-2"><b>3.✍️转录后的编辑与修改：</b>在完成首次转录后，系统会提供编辑修改功能。您可以根据实际听写印象，对关键内容进行修改，以提高转录结果的准确性。请注意，系统目前只提供一次修改机会 ⚠️，一旦您退出对话框或确认修改后，将无法再次进行编辑。在您进行修改操作时，录音将持续进行 🔄，您可以在完成修改工作后，根据时机截取下一段音频。</p>
-<p class="text-gray-500 mt-2"><b>4.⏯️录音暂停与恢复：</b>在不使用录音功能时，您可以选择暂停录音。暂停后，您可以随时方便地重新开始录音，无需从头设置。</p>
+<p class="text-gray-500 text-base mt-2"><b>1.🚀会话前，请先点击"设置"并输入访问码（仅需首次输入），后再填入个人有效付费api（每次需重复输入），再进行使用。（内部测试版，请勿外传！👀）</p>
+<p class="text-gray-500 text-base mt-2"><b>2.⌨️快捷键操作：</b>启动会话后，按 <kbd class="px-2 py-1.5 text-xs font-semibold text-green-800 bg-gray-100 border border-gray-200 rounded-lg">F9</kbd> 键，或点击【截断✂️Cut】按钮，分割音频片段。</p>
+<p class="text-gray-500 text-base mt-2"><b>3.🔑API 密钥配置：</b>进入设置后，您需要自行获取 API 密钥。针对不同的服务提供商，请查阅其官方文档以获取详细的 API 密钥查询与操作指南。通常情况下，配置 <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-600 hover:underline">OpenAI 的 API 密钥</a>足以支持系统的基本运行。然而，经过内部测试，我们强烈建议您同时获取 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Gemini 的 API 密钥</a>，因为 Gemini 在后续处理方面表现出更高级、更出色的性能。API一般是按量计费📊，目前阶段已经十分便宜💰，不会构成使用负担。另外，Gemini 提供免费额度 🎁，如需更高级的功能或更大的使用量，您可以绑定支付方式进行升级。</p>
+<p class="text-gray-500 text-base mt-2"><b>4.🎙️会话稳定性与音频截取：</b>注意保持声源清晰干净，避免多声源。支持麦克风声源，不支持系统内部声源，故一般适合给现场会议或者外部播放源的转录与翻译。根据测试，会话启动后的前一到两段可能会出现不稳定情况，建议您提前截取两段测试音频 🔇，以排除干扰。在对话过程中，请尽量选择在一段完整、连贯的意群停顿处进行截取，要注意避免在句中截断。通常建议将每段音频截取为 3 到 4 句话，这样更适合页面显示，提升用户体验 ✨。</p>
+<p class="text-gray-500 text-base mt-2"><b>5.⏯️录音暂停与恢复：</b>在不使用录音功能时，您可以选择暂停录音。暂停后，您可以随时方便地重新开始录音，无需从头设置。</p>
 
                         <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2 mt-6">【B. API 密钥 Key】</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
@@ -139,6 +253,13 @@
                                 <label for="geminiApiKey" class="block text-base font-medium text-gray-700 mb-1"><b>Gemini API 密钥</b></label>
                                 <input type="password" id="geminiApiKey" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="专用于后续文本校正与翻译处理 Only for proofreading and translation.">
                             </div>
+                        </div>
+                        <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-700">📊 <b>本次会话总消费：</b></span>
+                                <span class="text-lg font-bold text-orange-600">¥<span id="totalCost">0.00</span></span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">* 费用为估算值，实际费用以API提供商账单为准</div>
                         </div>
                     </div>
                     <div>
@@ -162,14 +283,42 @@
                             </div>
                         </div>
                     </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2 mt-6">【D. 音频源选择 Audio Source】</h3>
+                        <div class="pt-4">
+                            <label class="block text-base font-medium text-gray-700 mb-3"><b>选择音频输入源：</b></label>
+                            <div class="space-y-3">
+                                <label class="flex items-center p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-all">
+                                    <input type="radio" id="audioSourceMic" name="audioSource" value="microphone" checked class="w-4 h-4 text-blue-600">
+                                    <div class="ml-3">
+                                        <div class="font-semibold text-gray-900">🎤 麦克风输入（推荐）</div>
+                                        <div class="text-sm text-gray-600">适用于现场会议、演讲或外部音源</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center p-3 bg-gray-50 border-2 border-gray-200 rounded-lg cursor-not-allowed opacity-60">
+                                    <input type="radio" id="audioSourceSystem" name="audioSource" value="system" disabled class="w-4 h-4 text-gray-400">
+                                    <div class="ml-3">
+                                        <div class="font-semibold text-gray-900">💻 系统音频（暂不支持）</div>
+                                        <div class="text-sm text-gray-600">浏览器限制，暂时无法捕获系统内部音频</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p class="text-sm text-gray-700">
+                                    <b>提示：</b>由于浏览器安全限制，目前仅支持麦克风输入。
+                                    如需转录电脑内部播放的音频，建议：
+                                    <br>• 使用外放 + 麦克风录制
+                                    <br>• 使用虚拟音频设备（如 VB-Cable）
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Access Code (Should be set via environment variable in production) ---
-
         // --- DOM Element References ---
         const openaiApiKeyInput = document.getElementById('openaiApiKey');
         const geminiApiKeyInput = document.getElementById('geminiApiKey');
@@ -178,9 +327,15 @@
         const sessionBtn = document.getElementById('sessionBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const captureBtn = document.getElementById('captureBtn');
+        const exportBtn = document.getElementById('exportBtn');
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModalOverlay = document.getElementById('settingsModalOverlay');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const exportModalOverlay = document.getElementById('exportModalOverlay');
+        const closeExportBtn = document.getElementById('closeExportBtn');
+        const exportTxtBtn = document.getElementById('exportTxtBtn');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const exportJsonBtn = document.getElementById('exportJsonBtn');
         const accessCodeSection = document.getElementById('accessCodeSection');
         const apiModelSettings = document.getElementById('apiModelSettings');
         const accessCodeInput = document.getElementById('accessCodeInput');
@@ -188,24 +343,90 @@
         const accessCodeError = document.getElementById('accessCodeError');
         const statusIndicator = document.getElementById('status-indicator');
         const statusText = document.getElementById('status-text');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const waveformContainer = document.getElementById('waveform-container');
+        const waveformCanvas = document.getElementById('waveform-canvas');
+        const recordingDuration = document.getElementById('recording-duration');
         const resultsTableBody = document.getElementById('resultsTableBody');
+        const totalCostDisplay = document.getElementById('totalCost');
+        const audioSourceMic = document.getElementById('audioSourceMic');
+        const audioSourceSystem = document.getElementById('audioSourceSystem');
         const tableContainer = resultsTableBody.parentElement.parentElement;
+        const toggleAccessCodeVisibilityBtn = document.getElementById('toggleAccessCodeVisibility');
+        const eyeOpenIcon = document.getElementById('eyeOpen');
+        const eyeClosedIcon = document.getElementById('eyeClosed');
 
         // --- State Management ---
         let mediaRecorder, audioChunks = [], isSessionActive = false, isPaused = false, stream, segmentCounter = 0;
+        let lastCaptureTime = 0;
+        const DEBOUNCE_DELAY = 1000;
+        let segmentTimestamps = {};
+        let audioContext, analyser, dataArray, animationId;
+        let recordingStartTime = 0;
+        let durationInterval;
+        
+        // --- Cost Tracking ---
+        let openaiCostTotal = 0;
+        let geminiCostTotal = 0;
+        const CNY_RATE = 7.3;
+        
+        const PRICING = {
+            'whisper-1': 0.006,
+            'gpt-4o-mini-transcribe': 0.0001,
+            'gpt-4o-mini': { input: 0.150, output: 0.600 },
+            'gpt-4o': { input: 2.50, output: 10.00 },
+            'gemini-2.5-flash': { input: 0.075, output: 0.30 },
+            'gemini-2.5-pro': { input: 1.25, output: 5.00 }
+        };
+
+        const loadingCellHtml = `<div class="flex items-center text-sm text-gray-500 loading-pulse"><svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="font-medium">正在处理，请稍候...</span></div>`;
 
         // --- Event Listeners ---
         sessionBtn.addEventListener('click', toggleSession);
         pauseBtn.addEventListener('click', togglePause);
         captureBtn.addEventListener('click', captureAndProcessSegment);
+        exportBtn.addEventListener('click', () => exportModalOverlay.classList.remove('hidden'));
         settingsBtn.addEventListener('click', () => settingsModalOverlay.classList.remove('hidden'));
         closeSettingsBtn.addEventListener('click', () => settingsModalOverlay.classList.add('hidden'));
+        closeExportBtn.addEventListener('click', () => exportModalOverlay.classList.add('hidden'));
+        exportTxtBtn.addEventListener('click', () => exportData('txt'));
+        exportCsvBtn.addEventListener('click', () => exportData('csv'));
+        exportJsonBtn.addEventListener('click', () => exportData('json'));
         unlockBtn.addEventListener('click', handleUnlock);
         settingsModalOverlay.addEventListener('click', (e) => {
             if (e.target === settingsModalOverlay) settingsModalOverlay.classList.add('hidden');
         });
+        exportModalOverlay.addEventListener('click', (e) => {
+            if (e.target === exportModalOverlay) exportModalOverlay.classList.add('hidden');
+        });
         window.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('DOMContentLoaded', checkAccess);
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAccess();
+        });
+        
+        // Toggle access code visibility
+        toggleAccessCodeVisibilityBtn.addEventListener('click', () => {
+            if (accessCodeInput.type === 'password') {
+                accessCodeInput.type = 'text';
+                eyeClosedIcon.style.display = 'none';
+                eyeOpenIcon.style.display = 'block';
+            } else {
+                accessCodeInput.type = 'password';
+                eyeClosedIcon.style.display = 'block';
+                eyeOpenIcon.style.display = 'none';
+            }
+        });
+
+        // Support Enter key for access code input
+        accessCodeInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                handleUnlock();
+            }
+        });
 
         // --- Access Control ---
         function checkAccess() {
@@ -311,6 +532,7 @@
                 isSessionActive = true;
                 isPaused = false;
                 updateSessionUI(true);
+                startWaveformVisualization();
                 startNewRecorder();
                 updateStatus('正在录音... 按 F9 截取 Recording in progress... Press F9 to capture.', 'recording');
             } catch (err) {
@@ -328,8 +550,13 @@
                 mediaRecorder.stop();
             }
             if (stream) stream.getTracks().forEach(track => track.stop());
+            stopWaveformVisualization();
             updateSessionUI(false);
             updateStatus('会话已停止 Audio stopped.', 'info');
+            // Reset cost tracking for new session
+            openaiCostTotal = 0;
+            geminiCostTotal = 0;
+            updateCostDisplay();
         }
 
         function togglePause() {
@@ -380,13 +607,21 @@
             mediaRecorder.start();
         }
 
+        // Function to sanitize string for HTTP headers
+        function sanitizeHeaderValue(str) {
+            if (!str) return '';
+            return str.replace(/[^\x20-\x7E]/g, '').trim();
+        }
+
         async function transcribeAudio(audioBlob, segmentId) {
-            const apiKey = openaiApiKeyInput.value.trim();
+            const apiKey = sanitizeHeaderValue(openaiApiKeyInput.value);
             const model = transcriptionModelSelect.value;
             const formData = new FormData();
             formData.append('file', new File([audioBlob], "recording.webm", { type: "audio/webm" }));
             formData.append('model', model);
             try {
+                updateStatus('正在转录音频...', 'loading');
+                updateProgress(10, '上传音频中...');
                 const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${apiKey}` },
@@ -395,15 +630,23 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error?.message || '未知 Whisper API 错误');
 
+                // Track cost for transcription
+                const audioDuration = audioBlob.size / (16000 * 2); // Rough estimate
+                const transcriptionCost = (audioDuration / 60) * (PRICING[model] || 0.006);
+                addCost('openai', transcriptionCost);
+
                 // Pass the initial transcription text to makeCellEditable
                 makeCellEditable(segmentId, data.text);
                 // Start the LLM processing chain with the initial transcription
                 correctAndPolishText(data.text, segmentId);
+                updateStatus('正在录音... 按 F9 截取 Recording in progress... Press F9 to capture.', 'recording');
             } catch (error) {
                 console.error("Whisper Error:", error);
                 updateTableCell(segmentId, 1, `转录失败: ${error.message}`, 'error');
                 updateTableCell(segmentId, 2, '---', 'error');
                 updateTableCell(segmentId, 3, '---', 'error');
+                updateStatus('转录失败 Transcription failed', 'error');
+                hideProgress();
             }
         }
 
@@ -422,7 +665,11 @@
                 if (!response.ok || !data.candidates || data.candidates.length === 0) {
                     throw new Error(data.error?.message || 'Gemini API 返回无效响应');
                 }
-                return data.candidates[0].content.parts[0].text;
+                const result = data.candidates[0].content.parts[0].text;
+                // Track cost
+                const cost = estimateCost('gemini', prompt, result);
+                addCost('gemini', cost);
+                return result;
             } else { // OpenAI models
                 const apiKey = openaiApiKeyInput.value.trim();
                 const API_URL = 'https://api.openai.com/v1/chat/completions';
@@ -442,26 +689,34 @@
                 if (!response.ok || !data.choices || data.choices.length === 0) {
                     throw new Error(data.error?.message || 'OpenAI API 返回无效响应');
                 }
-                return data.choices[0].message.content;
+                const result = data.choices[0].message.content;
+                // Track cost
+                const cost = estimateCost('openai', prompt, result);
+                addCost('openai', cost);
+                return result;
             }
         }
 
         // Modified: Now takes originalInputText to update lastProcessedText at the end of the chain
         async function correctAndPolishText(originalInputText, segmentId) {
+            updateProgress(40, '校正文本中...');
             const prompt = `以下是一段佛教讲座的语音转录，其中可能包含错别字和谐音字。请纠正所有错别字和谐音字，使用简体，适当分段，使文本流畅、准确，并进行适当的分段。请直接返回处理后的文本，不要添加任何额外的解释或标签。\n\n原始文本：\n"${originalInputText}"`;
             try {
                 const polishedText = await callLLM(prompt);
+                updateTableCell(segmentId, 2, polishedText, 'success');
                 // Pass originalInputText down the chain
                 await identifyAndHighlightChineseTerms(polishedText, segmentId, originalInputText);
             } catch (error) {
                 console.error("Processing Error:", error);
                 updateTableCell(segmentId, 2, `校正失败: ${error.message}`, 'error');
                 updateTableCell(segmentId, 3, '---', 'error');
+                hideProgress();
             }
         }
 
         // Modified: Now takes originalInputText to pass down the chain
         async function identifyAndHighlightChineseTerms(text, segmentId, originalInputText) {
+            updateProgress(60, '识别关键术语中...');
             const prompt = `从以下文本中，识别出与佛教修行(修证)、学术相关的术语。请以JSON数组的格式返回这些词语，例如：["词语一", "词语二"]。如果找不到，请返回空数组 []。\n\n文本：\n"${text}"`;
             try {
                 const rawResponse = await callLLM(prompt);
@@ -482,6 +737,7 @@
 
         // Modified: Now takes originalInputText to pass down the chain
         async function translateText(textToTranslate, chineseTerms, segmentId, originalInputText) {
+            updateProgress(75, '翻译中...');
             const prompt = `请将以下中文文本直接翻译成英文，适当分段，不要加引号，不要回复其他内容。\n\n中文文本：\n"${textToTranslate}"`;
             try {
                 const translatedText = await callLLM(prompt);
@@ -490,16 +746,20 @@
             } catch (error) {
                 console.error("Translation Error:", error);
                 updateTableCell(segmentId, 3, `翻译失败: ${error.message}`, 'error');
+                hideProgress();
             }
         }
 
         // Modified: This is the final step, now updates lastProcessedText
         async function identifyAndHighlightEnglishTerms(text, chineseTerms, segmentId, originalInputText) {
+            updateProgress(90, '识别英文术语中...');
             if (chineseTerms.length === 0) {
                 const formattedText = formatAndHighlightText(text, []);
                 updateTableCell(segmentId, 3, formattedText, 'success');
                 // Final step, update lastProcessedText
                 updateLastProcessedText(segmentId, originalInputText);
+                updateProgress(100, '完成！');
+                hideProgress();
                 return;
             }
             const prompt = `From the following English text, identify the academic Buddhist terms that correspond to the concepts in the provided Chinese list. Return the identified English terms as a JSON array, for example: ["Term 1", "Term 2"]. If none are found, return an empty array [].\n\nEnglish Text:\n"${text}"\n\nOriginal Chinese Terms for reference:\n${JSON.stringify(chineseTerms)}`;
@@ -511,12 +771,16 @@
                 updateTableCell(segmentId, 3, highlightedHtml, 'success');
                 // Final step, update lastProcessedText
                 updateLastProcessedText(segmentId, originalInputText);
+                updateProgress(100, '完成！');
+                hideProgress();
             } catch (error) {
                 console.error("English Term ID Error:", error);
                 const formattedText = formatAndHighlightText(text, []);
                 updateTableCell(segmentId, 3, formattedText, 'success');
                 // Even if highlighting fails, the translation itself was successful, so update lastProcessedText
                 updateLastProcessedText(segmentId, originalInputText);
+                updateProgress(100, '完成！');
+                hideProgress();
             }
         }
 
@@ -642,8 +906,6 @@
             }
         }
 
-        const loadingCellHtml = `<div class="flex items-center text-sm text-gray-500"><svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>处理中...</div>`;
-
         function addPlaceholderRow(segmentId) {
             const row = resultsTableBody.insertRow(0);
             row.id = segmentId;
@@ -682,6 +944,166 @@
 
         function scrollToTop() {
             tableContainer.scrollTop = 0;
+        }
+
+        // --- Progress Management ---
+        function updateProgress(percentage, text) {
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = text;
+            progressPercentage.textContent = `${percentage}%`;
+        }
+
+        function hideProgress() {
+            setTimeout(() => {
+                progressContainer.classList.add('hidden');
+                progressBar.style.width = '0%';
+            }, 1000);
+        }
+
+        // --- Export Functions ---
+        function exportData(format) {
+            const rows = Array.from(resultsTableBody.querySelectorAll('tr'));
+            if (rows.length === 0) {
+                alert('没有数据可导出 No data to export');
+                return;
+            }
+
+            let content = '';
+            const data = rows.reverse().map(row => {
+                const cells = row.cells;
+                return {
+                    timestamp: cells[0].textContent,
+                    transcription: cells[1].textContent.replace(/处理中.../g, '').trim(),
+                    corrected: cells[2].textContent.replace(/处理中.../g, '').trim(),
+                    translation: cells[3].textContent.replace(/处理中.../g, '').trim()
+                };
+            });
+
+            if (format === 'txt') {
+                content = data.map(d => `[${d.timestamp}]\n转录: ${d.transcription}\n校正: ${d.corrected}\n翻译: ${d.translation}\n\n`).join('');
+                downloadFile(content, 'transcription.txt', 'text/plain');
+            } else if (format === 'csv') {
+                content = 'Timestamp,Transcription,Corrected,Translation\n';
+                content += data.map(d => `"${d.timestamp}","${d.transcription}","${d.corrected}","${d.translation}"`).join('\n');
+                downloadFile(content, 'transcription.csv', 'text/csv');
+            } else if (format === 'json') {
+                content = JSON.stringify(data, null, 2);
+                downloadFile(content, 'transcription.json', 'application/json');
+            }
+
+            exportModalOverlay.classList.add('hidden');
+            showToast('导出成功！');
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Toast Notification ---
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // --- Cost Tracking Functions ---
+        function addCost(provider, usdCost) {
+            if (provider === 'openai') {
+                openaiCostTotal += usdCost;
+            } else if (provider === 'gemini') {
+                geminiCostTotal += usdCost;
+            }
+            updateCostDisplay();
+        }
+
+        function estimateCost(provider, prompt, response) {
+            const model = provider === 'gemini' ? processingEngineSelect.value : transcriptionModelSelect.value;
+            const pricing = PRICING[model];
+            if (!pricing) return 0;
+            
+            if (typeof pricing === 'number') {
+                return pricing;
+            } else {
+                const inputTokens = Math.ceil(prompt.length / 4);
+                const outputTokens = Math.ceil(response.length / 4);
+                return (inputTokens / 1000000 * pricing.input) + (outputTokens / 1000000 * pricing.output);
+            }
+        }
+
+        function updateCostDisplay() {
+            const totalUsd = openaiCostTotal + geminiCostTotal;
+            const totalCny = totalUsd * CNY_RATE;
+            totalCostDisplay.textContent = totalCny.toFixed(2);
+        }
+
+        // --- Waveform Visualization ---
+        function startWaveformVisualization() {
+            if (!stream) return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            waveformContainer.classList.remove('hidden');
+            recordingStartTime = Date.now();
+            drawWaveform();
+            durationInterval = setInterval(updateRecordingDuration, 1000);
+        }
+
+        function stopWaveformVisualization() {
+            if (animationId) cancelAnimationFrame(animationId);
+            if (audioContext) audioContext.close();
+            if (durationInterval) clearInterval(durationInterval);
+            waveformContainer.classList.add('hidden');
+        }
+
+        function drawWaveform() {
+            const canvas = waveformCanvas;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            analyser.getByteTimeDomainData(dataArray);
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#3b82f6';
+            ctx.beginPath();
+            
+            const sliceWidth = canvas.width / dataArray.length;
+            let x = 0;
+            
+            for (let i = 0; i < dataArray.length; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            animationId = requestAnimationFrame(drawWaveform);
+        }
+
+        function updateRecordingDuration() {
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            recordingDuration.textContent = `${minutes}:${seconds}`;
         }
     </script>
 </body>
