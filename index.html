@@ -239,7 +239,7 @@
 <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-2">【A.使用说明 Instructions】</h3>
 <p class="text-gray-500 text-base mt-2"><b>1.🚀会话前，请先点击"设置"并输入访问码（仅需首次输入），后再填入个人有效付费api（每次需重复输入），再进行使用。（内部测试版，请勿外传！👀）</p>
 <p class="text-gray-500 text-base mt-2"><b>2.⌨️快捷键操作：</b>启动会话后，按 <kbd class="px-2 py-1.5 text-xs font-semibold text-green-800 bg-gray-100 border border-gray-200 rounded-lg">F9</kbd> 键，或点击【截断✂️Cut】按钮，分割音频片段。</p>
-<p class="text-gray-500 text-base mt-2"><b>3.🔑API 密钥配置：</b>进入设置后，您需要自行获取 API 密钥。针对不同的服务提供商，请查阅其官方文档以获取详细的 API 密钥查询与操作指南。通常情况下，配置 <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-600 hover:underline">OpenAI 的 API 密钥</a>足以支持系统的基本运行。然而，经过内部测试，我们强烈建议您同时获取 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Gemini 的 API 密钥</a>，因为 Gemini 在后续处理方面表现出更高级、更出色的性能。API一般是按量计费📊，目前阶段已经十分便宜💰，不会构成使用负担。另外，Gemini 提供免费额度 🎁，如需更高级的功能或更大的使用量，您可以绑定支付方式进行升级。</p>
+<p class="text-gray-500 text-base mt-2"><b>3.🔑API 密钥配置：</b>进入设置后，您需要自行获取 API 密钥。您可配置 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Gemini 的 API 密钥</a>直接使用新一代 <b>Gemini 3.5 智能转录模型</b> 及后续文本校正与翻译（仅需单个 Gemini 密钥即可跑通全流程！）。如需使用 OpenAI 提供的转录或对话模型，可配置 <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-600 hover:underline">OpenAI 的 API 密钥</a>。API 一般按量计费📊，目前阶段十分便宜💰，且 Gemini 提供免费额度 🎁。</p>
 <p class="text-gray-500 text-base mt-2"><b>4.🎙️会话稳定性与音频截取：</b>注意保持声源清晰干净，避免多声源。支持麦克风声源，不支持系统内部声源，故一般适合给现场会议或者外部播放源的转录与翻译。根据测试，会话启动后的前一到两段可能会出现不稳定情况，建议您提前截取两段测试音频 🔇，以排除干扰。在对话过程中，请尽量选择在一段完整、连贯的意群停顿处进行截取，要注意避免在句中截断。通常建议将每段音频截取为 3 到 4 句话，这样更适合页面显示，提升用户体验 ✨。</p>
 <p class="text-gray-500 text-base mt-2"><b>5.⏯️录音暂停与恢复：</b>在不使用录音功能时，您可以选择暂停录音。暂停后，您可以随时方便地重新开始录音，无需从头设置。</p>
 
@@ -247,11 +247,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                             <div>
                                 <label for="openaiApiKey" class="block text-base font-medium text-gray-700 mb-1"><b>OpenAI API 密钥</b></label>
-                                <input type="password" id="openaiApiKey" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="用于转录和后续处理 For transcribing and subsequent process.">
+                                <input type="password" id="openaiApiKey" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="用于 OpenAI Whisper 转录与 GPT 处理">
                             </div>
                             <div>
                                 <label for="geminiApiKey" class="block text-base font-medium text-gray-700 mb-1"><b>Gemini API 密钥</b></label>
-                                <input type="password" id="geminiApiKey" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="专用于后续文本校正与翻译处理 Only for proofreading and translation.">
+                                <input type="password" id="geminiApiKey" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="用于 Gemini 3.5 转录、校正与翻译 (推荐)">
                             </div>
                         </div>
                         <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -268,18 +268,44 @@
                             <div>
                                 <label for="transcriptionModelSelect" class="block text-base font-medium text-gray-700 mb-1"><b>转录模型 Transcribing Models</b></label>
                                    <select id="transcriptionModelSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                       <option value="gpt-4o-mini-transcribe">GPT-4o-mini-transcribe (默认)</option>
-                                       <option value="whisper-1">Whisper-1（总体都比4o-mini-transcribe差）</option>
+                                       <option value="gemini-3.5-transcribe-smart">Gemini 3.5 Transcribe (智能模式 Smart - 默认推荐)</option>
+                                       <option value="gemini-3.5-transcribe-verbatim">Gemini 3.5 Transcribe (逐字模式 Verbatim)</option>
+                                       <option value="gpt-4o-mini-transcribe">OpenAI GPT-4o-mini-transcribe</option>
+                                       <option value="whisper-1">OpenAI Whisper-1（较慢）</option>
                                    </select>
                             </div>
                             <div>
                                 <label for="processingEngineSelect" class="block text-base font-medium text-gray-700 mb-1"><b>处理引擎 Processing Models</b></label>
                                    <select id="processingEngineSelect" class="w-full px-4 py-2 bg-gray-100 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                       <option value="gpt-4o-mini">OpenAI GPT-4o mini (默认)</option>
-                                       <option value="gpt-4o">OpenAI GPT-4o（贵一些，效果更好）</option>
-                                       <option value="gemini-2.5-flash">Gemini 2.5 Flash（比Openai便宜，效果更好，有免费额度）</option>
-                                       <option value="gemini-2.5-pro">Gemini 2.5 Pro（比Flash贵一倍，更好）</option>
+                                       <option value="gemini-2.5-flash">Gemini 2.5 Flash（比OpenAI便宜，效果好，有免费额度 - 默认推荐）</option>
+                                       <option value="gemini-2.5-pro">Gemini 2.5 Pro（更高品质，深度推理）</option>
+                                       <option value="gpt-4o-mini">OpenAI GPT-4o mini</option>
+                                       <option value="gpt-4o">OpenAI GPT-4o（更贵）</option>
                                    </select>
+                            </div>
+                        </div>
+                        <div id="geminiTranscribeOptions" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="font-semibold text-blue-900 text-sm mb-2 flex items-center gap-1">
+                                <span>✨ Gemini 3.5 Transcribe 提示与词汇配置：</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="geminiLanguageSelect" class="block text-xs font-medium text-gray-700 mb-1">语言预设 Language Hint (可选)</label>
+                                    <select id="geminiLanguageSelect" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm">
+                                        <option value="">自动检测 Auto-detect (默认)</option>
+                                        <option value="cmn-Hans-CN">中文/普通话 (cmn-Hans-CN)</option>
+                                        <option value="yue-Hant-HK">粤语 (yue-Hant-HK)</option>
+                                        <option value="en-US">英语 (en-US)</option>
+                                        <option value="ja-JP">日语 (ja-JP)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="geminiCustomVocab" class="block text-xs font-medium text-gray-700 mb-1">佛教专业词汇提示词 Custom Vocabulary (逗号分隔)</label>
+                                    <input type="text" id="geminiCustomVocab" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm" placeholder="例如: 阿耨多罗, 般若, 涅槃, 菩提, 唯识" value="阿耨多罗, 般若, 涅槃, 菩提, 唯识, 华严, 楞严">
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-2">
+                                * Gemini 3.5 Transcribe 智能模式自带去除语气词、口误更正与自动结构化排版；自定义词汇可进一步提升佛教专业术语识别率。
                             </div>
                         </div>
                     </div>
@@ -358,6 +384,9 @@
         const toggleAccessCodeVisibilityBtn = document.getElementById('toggleAccessCodeVisibility');
         const eyeOpenIcon = document.getElementById('eyeOpen');
         const eyeClosedIcon = document.getElementById('eyeClosed');
+        const geminiLanguageSelect = document.getElementById('geminiLanguageSelect');
+        const geminiCustomVocab = document.getElementById('geminiCustomVocab');
+        const geminiTranscribeOptions = document.getElementById('geminiTranscribeOptions');
 
         // --- State Management ---
         let mediaRecorder, audioChunks = [], isSessionActive = false, isPaused = false, stream, segmentCounter = 0;
@@ -374,6 +403,9 @@
         const CNY_RATE = 7.3;
         
         const PRICING = {
+            'gemini-3.5-transcribe-smart': 0.005,
+            'gemini-3.5-transcribe-verbatim': 0.005,
+            'gemini-3.5-transcribe': 0.005,
             'whisper-1': 0.006,
             'gpt-4o-mini-transcribe': 0.0001,
             'gpt-4o-mini': { input: 0.150, output: 0.600 },
@@ -390,6 +422,11 @@
         captureBtn.addEventListener('click', captureAndProcessSegment);
         exportBtn.addEventListener('click', () => exportModalOverlay.classList.remove('hidden'));
         settingsBtn.addEventListener('click', () => settingsModalOverlay.classList.remove('hidden'));
+        transcriptionModelSelect.addEventListener('change', () => {
+            if (geminiTranscribeOptions) {
+                geminiTranscribeOptions.style.display = transcriptionModelSelect.value.startsWith('gemini') ? 'block' : 'none';
+            }
+        });
         closeSettingsBtn.addEventListener('click', () => settingsModalOverlay.classList.add('hidden'));
         closeExportBtn.addEventListener('click', () => exportModalOverlay.classList.add('hidden'));
         exportTxtBtn.addEventListener('click', () => exportData('txt'));
@@ -513,17 +550,30 @@
                 updateStatus('请先在设置中输入访问码', 'error');
                 return;
             }
-            if (!openaiApiKeyInput.value.trim()) {
-                updateStatus('请输入 OpenAI API 密钥 (用于转录)', 'error');
-                return;
-            }
+
+            const transModel = transcriptionModelSelect.value;
             const engine = processingEngineSelect.value;
+
+            // 校验转录模型所需的 API 密钥
+            if (transModel.startsWith('gemini')) {
+                if (!geminiApiKeyInput.value.trim()) {
+                    updateStatus('请在设置中输入 Gemini API 密钥 (用于 Gemini 3.5 转录)', 'error');
+                    return;
+                }
+            } else {
+                if (!openaiApiKeyInput.value.trim()) {
+                    updateStatus('请在设置中输入 OpenAI API 密钥 (用于 OpenAI 转录)', 'error');
+                    return;
+                }
+            }
+
+            // 校验后续校正与翻译引擎所需的 API 密钥
             if (engine.startsWith('gemini') && !geminiApiKeyInput.value.trim()) {
-                updateStatus('请为所选的 Gemini 引擎输入 API 密钥', 'error');
+                updateStatus('请为所选的 Gemini 处理引擎输入 API 密钥', 'error');
                 return;
             }
             if (engine.startsWith('gpt') && !openaiApiKeyInput.value.trim()) {
-                updateStatus('请为所选的 OpenAI 引擎输入 API 密钥', 'error');
+                updateStatus('请为所选的 OpenAI 处理引擎输入 API 密钥', 'error');
                 return;
             }
 
@@ -613,35 +663,220 @@
             return str.replace(/[^\x20-\x7E]/g, '').trim();
         }
 
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const result = reader.result || '';
+                    const base64 = result.includes(',') ? result.split(',')[1] : result;
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function transcribeWithGemini(audioBlob, modelValue) {
+            const apiKey = geminiApiKeyInput.value.trim();
+            if (!apiKey) {
+                throw new Error('未检测到 Gemini API 密钥，请先在设置中填写');
+            }
+
+            const modeType = modelValue.includes('verbatim') ? 'verbatim' : 'smart';
+            const mimeType = audioBlob.type ? audioBlob.type.split(';')[0] : 'audio/webm';
+            
+            const customVocabInput = document.getElementById('geminiCustomVocab');
+            const customVocab = customVocabInput && customVocabInput.value.trim()
+                ? customVocabInput.value.split(/[,，\n]/).map(s => s.trim()).filter(Boolean)
+                : [];
+            
+            const langSelect = document.getElementById('geminiLanguageSelect');
+            const languageCode = langSelect ? langSelect.value : '';
+
+            updateProgress(15, '处理音频编码中...');
+            const base64Data = await blobToBase64(audioBlob);
+
+            // 优先尝试调用 Vercel Serverless 后端接口 (/api/transcribe-gemini)
+            try {
+                updateProgress(20, '正在通过服务转录音频...');
+                const res = await fetch('/api/transcribe-gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        audioBase64: base64Data,
+                        mimeType: mimeType,
+                        apiKey: apiKey,
+                        mode: modeType,
+                        customVocabulary: customVocab.length > 0 ? customVocab : undefined,
+                        languageCodes: languageCode ? [languageCode] : []
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.text !== undefined) return data.text;
+                    if (data.message) throw new Error(data.message);
+                } else if (res.status !== 404) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.message || errData.error || `服务端转录响应错误 (${res.status})`);
+                }
+            } catch (err) {
+                const isNotFound = err.message && (err.message.includes('404') || err.message.includes('Failed to fetch'));
+                if (!isNotFound) {
+                    throw err;
+                }
+                console.warn('后端转录接口不可用，尝试使用浏览器直连 Gemini API:', err);
+            }
+
+            // 降级策略：浏览器直连 Gemini Files API & Interactions API
+            return await transcribeGeminiDirect(audioBlob, apiKey, mimeType, modeType, customVocab, languageCode);
+        }
+
+        async function transcribeGeminiDirect(audioBlob, apiKey, mimeType, modeType, customVocab, languageCode) {
+            updateProgress(15, '直接上传音频至 Gemini Files API...');
+            
+            // 1. 初始化 Files API Resumable 上传
+            const initRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'X-Goog-Upload-Protocol': 'resumable',
+                    'X-Goog-Upload-Command': 'start',
+                    'X-Goog-Upload-Header-Content-Length': audioBlob.size.toString(),
+                    'X-Goog-Upload-Header-Content-Type': mimeType,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    file: { display_name: `segment_${Date.now()}` }
+                })
+            });
+
+            if (!initRes.ok) {
+                const errText = await initRes.text();
+                throw new Error(`Files API 初始化失败: ${initRes.status} ${errText}`);
+            }
+
+            const uploadUrl = initRes.headers.get('x-goog-upload-url');
+            if (!uploadUrl) {
+                throw new Error('未能从 Files API 获取上传地址。若在浏览器直接打开静态文件遇到跨域限制，请使用 Vercel 或支持 /api 代理的服务环境。');
+            }
+
+            // 2. 上传音频二进制数据
+            updateProgress(25, '上传音频二进制数据中...');
+            const uploadRes = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Length': audioBlob.size.toString(),
+                    'X-Goog-Upload-Offset': '0',
+                    'X-Goog-Upload-Command': 'upload, finalize'
+                },
+                body: audioBlob
+            });
+
+            if (!uploadRes.ok) {
+                const errText = await uploadRes.text();
+                throw new Error(`音频上传失败: ${uploadRes.status} ${errText}`);
+            }
+
+            const fileInfo = await uploadRes.json();
+            const fileUri = fileInfo.file?.uri;
+            const fileName = fileInfo.file?.name;
+            if (!fileUri) throw new Error('Files API 上传成功但未获取到 file.uri');
+
+            // 3. 调用 Interactions API 进行转录
+            updateProgress(35, 'Gemini 3.5 正在智能识别...');
+            const transcriptionConfig = {
+                mode: modeType === 'smart' ? 'smart' : { type: 'verbatim' }
+            };
+            if (languageCode) {
+                transcriptionConfig.language_codes = [languageCode];
+            }
+            if (customVocab && customVocab.length > 0) {
+                transcriptionConfig.custom_vocabulary = customVocab;
+            }
+
+            const interactionRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/interactions?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'gemini-3.5-transcribe',
+                    input: [
+                        {
+                            type: 'audio',
+                            uri: fileUri,
+                            mime_type: mimeType
+                        }
+                    ],
+                    generation_config: {
+                        transcription_config: transcriptionConfig
+                    }
+                })
+            });
+
+            if (!interactionRes.ok) {
+                const errText = await interactionRes.text();
+                throw new Error(`Gemini Interactions API 转录失败: ${interactionRes.status} ${errText}`);
+            }
+
+            const interaction = await interactionRes.json();
+            let text = interaction.output_text || '';
+            if (!text && interaction.steps && Array.isArray(interaction.steps)) {
+                for (const step of interaction.steps) {
+                    if (step.content && Array.isArray(step.content)) {
+                        for (const c of step.content) {
+                            if (c.text) text += (text ? '\n' : '') + c.text;
+                        }
+                    }
+                }
+            }
+
+            // 异步清理临时文件
+            if (fileName) {
+                fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${apiKey}`, {
+                    method: 'DELETE'
+                }).catch(() => {});
+            }
+
+            return text;
+        }
+
         async function transcribeAudio(audioBlob, segmentId) {
-            const apiKey = sanitizeHeaderValue(openaiApiKeyInput.value);
             const model = transcriptionModelSelect.value;
-            const formData = new FormData();
-            formData.append('file', new File([audioBlob], "recording.webm", { type: "audio/webm" }));
-            formData.append('model', model);
             try {
                 updateStatus('正在转录音频...', 'loading');
-                updateProgress(10, '上传音频中...');
-                const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${apiKey}` },
-                    body: formData
-                });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error?.message || '未知 Whisper API 错误');
+                updateProgress(10, '准备音频数据中...');
 
-                // Track cost for transcription
-                const audioDuration = audioBlob.size / (16000 * 2); // Rough estimate
-                const transcriptionCost = (audioDuration / 60) * (PRICING[model] || 0.006);
-                addCost('openai', transcriptionCost);
+                let transcribedText = '';
+                const audioDuration = audioBlob.size / (16000 * 2); // 估算时长秒数
+
+                if (model.startsWith('gemini')) {
+                    transcribedText = await transcribeWithGemini(audioBlob, model);
+                    const transcriptionCost = (audioDuration / 60) * (PRICING[model] || 0.005);
+                    addCost('gemini', transcriptionCost);
+                } else {
+                    const apiKey = sanitizeHeaderValue(openaiApiKeyInput.value);
+                    const formData = new FormData();
+                    formData.append('file', new File([audioBlob], "recording.webm", { type: "audio/webm" }));
+                    formData.append('model', model);
+                    updateProgress(20, '上传至 OpenAI Whisper...');
+                    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${apiKey}` },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error?.message || '未知 Whisper API 错误');
+                    transcribedText = data.text;
+                    const transcriptionCost = (audioDuration / 60) * (PRICING[model] || 0.006);
+                    addCost('openai', transcriptionCost);
+                }
 
                 // Pass the initial transcription text to makeCellEditable
-                makeCellEditable(segmentId, data.text);
+                makeCellEditable(segmentId, transcribedText);
                 // Start the LLM processing chain with the initial transcription
-                correctAndPolishText(data.text, segmentId);
+                correctAndPolishText(transcribedText, segmentId);
                 updateStatus('正在录音... 按 F9 截取 Recording in progress... Press F9 to capture.', 'recording');
             } catch (error) {
-                console.error("Whisper Error:", error);
+                console.error("Transcription Error:", error);
                 updateTableCell(segmentId, 1, `转录失败: ${error.message}`, 'error');
                 updateTableCell(segmentId, 2, '---', 'error');
                 updateTableCell(segmentId, 3, '---', 'error');

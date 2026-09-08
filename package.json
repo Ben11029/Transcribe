@@ -1,0 +1,7 @@
+{
+  "name": "transcribe-pro",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "实时佛教语音校正与翻译 Pro"
+}
